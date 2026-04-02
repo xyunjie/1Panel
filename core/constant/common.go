@@ -18,20 +18,10 @@ const (
 	OrderAsc  = "ascending"
 
 	// backup
-	S3          = "S3"
-	OSS         = "OSS"
-	Sftp        = "SFTP"
-	OneDrive    = "OneDrive"
-	MinIo       = "MINIO"
-	Cos         = "COS"
-	Kodo        = "KODO"
-	WebDAV      = "WebDAV"
-	Local       = "LOCAL"
-	UPYUN       = "UPYUN"
-	ALIYUN      = "ALIYUN"
-	GoogleDrive = "GoogleDrive"
-
-	OneDriveRedirectURI = "http://localhost/login/authorized"
+	S3    = "S3"
+	Sftp  = "SFTP"
+	MinIo = "MINIO"
+	Local = "LOCAL"
 )
 
 const (

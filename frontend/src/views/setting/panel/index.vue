@@ -56,7 +56,6 @@
                                     </div>
                                     <div>
                                         <el-button
-                                            v-if="isMasterProductPro"
                                             @click="onChangeThemeColor"
                                             icon="Setting"
                                             class="!h-[32px] sm:!h-[33.5px]"
@@ -78,7 +77,7 @@
                                 </el-radio-group>
                             </el-form-item>
 
-                            <el-form-item :label="$t('setting.watermark')" v-if="isMasterProductPro" prop="watermark">
+                            <el-form-item :label="$t('setting.watermark')" prop="watermark">
                                 <el-radio-group class="w-full" @change="onChangeWatermark" v-model="form.watermarkShow">
                                     <el-radio-button value="Enable">
                                         <span>{{ $t('commons.button.enable') }}</span>
@@ -259,7 +258,7 @@ import i18n from '@/lang';
 const loading = ref(false);
 const globalStore = GlobalStore();
 
-const { isMasterProductPro, isMaster } = storeToRefs(globalStore);
+const { isMaster } = storeToRefs(globalStore);
 
 const { switchTheme } = useTheme();
 const mobile = computed(() => {
@@ -374,23 +373,21 @@ const search = async () => {
 
     form.complexityVerification = res.data.complexityVerification;
 
-    if (isMasterProductPro.value) {
-        const xpackRes = await getXpackSetting();
-        if (xpackRes) {
-            form.theme = xpackRes.data.theme || globalStore.themeConfig.theme || 'light';
-            form.themeColor = JSON.parse(xpackRes.data.themeColor || '{"light":"#005eeb","dark":"#F0BE96"}');
-            globalStore.themeConfig.themeColor = xpackRes.data.themeColor
-                ? xpackRes.data.themeColor
-                : '{"light":"#005eeb","dark":"#F0BE96"}';
-            globalStore.themeConfig.theme = form.theme;
-            form.proxyDocker = xpackRes.data.proxyDocker;
-            form.watermark = xpackRes.data.watermark;
-            form.watermarkShow = xpackRes.data.watermarkShow;
-            try {
-                globalStore.watermark = JSON.parse(xpackRes.data.watermark);
-            } catch {
-                globalStore.watermark = null;
-            }
+    const xpackRes = await getXpackSetting();
+    if (xpackRes) {
+        form.theme = xpackRes.data.theme || globalStore.themeConfig.theme || 'light';
+        form.themeColor = JSON.parse(xpackRes.data.themeColor || '{"light":"#005eeb","dark":"#F0BE96"}');
+        globalStore.themeConfig.themeColor = xpackRes.data.themeColor
+            ? xpackRes.data.themeColor
+            : '{"light":"#005eeb","dark":"#F0BE96"}';
+        globalStore.themeConfig.theme = form.theme;
+        form.proxyDocker = xpackRes.data.proxyDocker;
+        form.watermark = xpackRes.data.watermark;
+        form.watermarkShow = xpackRes.data.watermarkShow;
+        try {
+            globalStore.watermark = JSON.parse(xpackRes.data.watermark);
+        } catch {
+            globalStore.watermark = null;
         }
     } else {
         globalStore.themeConfig.theme = form.theme;
@@ -512,19 +509,17 @@ const onChangeApiInterfaceStatus = async () => {
 const handleThemeChange = async (val: string) => {
     globalStore.themeConfig.theme = val;
     switchTheme();
-    if (globalStore.isMasterProductPro) {
-        await updateXpackSettingByKey('Theme', val);
-        let color: string;
-        const themeColor: ThemeColor = JSON.parse(globalStore.themeConfig.themeColor);
-        if (val === 'auto') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-            color = prefersDark.matches ? themeColor.dark : themeColor.light;
-        } else {
-            color = val === 'dark' ? themeColor.dark : themeColor.light;
-        }
-        globalStore.themeConfig.primary = color;
-        setPrimaryColor(color);
+    await updateXpackSettingByKey('Theme', val);
+    let color: string;
+    const themeColor: ThemeColor = JSON.parse(globalStore.themeConfig.themeColor);
+    if (val === 'auto') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+        color = prefersDark.matches ? themeColor.dark : themeColor.light;
+    } else {
+        color = val === 'dark' ? themeColor.dark : themeColor.light;
     }
+    globalStore.themeConfig.primary = color;
+    setPrimaryColor(color);
 };
 const onSave = async (key: string, val: any) => {
     loading.value = true;

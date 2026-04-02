@@ -10,13 +10,10 @@ import (
 	"github.com/1Panel-dev/1Panel/core/app/model"
 	"github.com/1Panel-dev/1Panel/core/app/repo"
 	"github.com/1Panel-dev/1Panel/core/global"
-	"github.com/1Panel-dev/1Panel/core/utils/cmd"
 	"github.com/jinzhu/copier"
 )
 
 type LogService struct{}
-
-const logs = "https://resource.fit2cloud.com/installation-log.sh"
 
 type ILogService interface {
 	CreateLoginLog(operation model.LoginLog) error
@@ -106,8 +103,4 @@ func (u *LogService) CleanLogs(logtype string) error {
 		return logRepo.CleanOperation()
 	}
 	return logRepo.CleanLogin()
-}
-
-func writeLogs(version string) {
-	_, _ = cmd.RunDefaultWithStdoutBashCf("curl -sfL %s | sh -s 1p upgrade %s", logs, version)
 }

@@ -141,6 +141,7 @@ const onCheck = async (key: any, name: any) => {
         })
         .catch(() => {
             em('isExist', false);
+            em('update:maskShow', true);
             refresh.value++;
         });
 };

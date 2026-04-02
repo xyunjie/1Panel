@@ -52,11 +52,8 @@ export interface GlobalState {
     defaultIO: string;
     isFxplay: boolean;
 
-    isProductPro: boolean;
     isIntl: boolean;
     docWithRegion: boolean;
-    productProExpires: number;
-    isMasterProductPro: boolean;
     isOffLine: boolean;
 
     masterAlias: string;

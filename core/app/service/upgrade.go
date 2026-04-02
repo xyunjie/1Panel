@@ -72,6 +72,7 @@ type UpgradeService struct{}
 
 type IUpgradeService interface {
 	Upgrade(req dto.Upgrade) error
+	UpgradeByFile(req dto.UpgradeByFile) error
 	Rollback(req dto.OperateByID) error
 	LoadNotes(req dto.Upgrade) (string, error)
 	SearchUpgrade() (*dto.UpgradeInfo, error)
@@ -251,13 +252,138 @@ func (u *UpgradeService) Upgrade(req dto.Upgrade) error {
 		global.LOG.Info("upgrade successful!")
 		dropBackupCopies()
 		xpack.AutoUpgradeWithMaster()
-		go writeLogs(req.Version)
 		_ = settingRepo.Update("SystemVersion", req.Version)
 		_ = global.AgentDB.Model(&model.Setting{}).Where("key = ?", "SystemVersion").Updates(map[string]interface{}{"value": req.Version}).Error
 		global.CONF.Base.Version = req.Version
 		_ = os.RemoveAll(downloadDir)
 		_ = settingRepo.Update("SystemStatus", "Free")
 
+		controller.RestartPanel(true, true, true)
+	}()
+	return nil
+}
+
+func (u *UpgradeService) UpgradeByFile(req dto.UpgradeByFile) error {
+	global.LOG.Infof("start to upgrade from local file: %s", req.FilePath)
+
+	if _, err := os.Stat(req.FilePath); err != nil {
+		return fmt.Errorf("upgrade file not found: %s", req.FilePath)
+	}
+
+	if req.Checksum != "" {
+		if err := common.VerifyFileSHA256(req.FilePath, req.Checksum); err != nil {
+			return fmt.Errorf("checksum verification failed: %v", err)
+		}
+	}
+
+	baseDir := path.Join(global.CONF.Base.InstallDir, fmt.Sprintf("1panel/tmp/upgrade/%s", req.Version))
+	downloadDir := path.Join(baseDir, "downloads")
+	_ = os.RemoveAll(baseDir)
+	originalDir := path.Join(baseDir, "original")
+	if err := os.MkdirAll(downloadDir, os.ModePerm); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(originalDir, os.ModePerm); err != nil {
+		return err
+	}
+	svcInfo, err := loadServiceInfo()
+	if err != nil {
+		return err
+	}
+
+	fileName := path.Base(req.FilePath)
+	destFile := path.Join(downloadDir, fileName)
+	if err := files.CopyItem(false, true, req.FilePath, downloadDir); err != nil {
+		return fmt.Errorf("copy upgrade file failed: %v", err)
+	}
+
+	_ = settingRepo.Update("SystemStatus", "Upgrading")
+	go func() {
+		oldLang := common.LoadParams("LANGUAGE")
+		if err := files.HandleUnTar(destFile, downloadDir, ""); err != nil {
+			global.LOG.Errorf("decompress file failed, err: %v", err)
+			_ = settingRepo.Update("SystemStatus", "Free")
+			return
+		}
+		tmpDir := downloadDir + "/" + strings.ReplaceAll(strings.TrimSuffix(fileName, ".tar.gz"), fileName, strings.TrimSuffix(fileName, ".tar.gz"))
+		// fallback: find extracted dir
+		entries, _ := os.ReadDir(downloadDir)
+		for _, e := range entries {
+			if e.IsDir() {
+				tmpDir = path.Join(downloadDir, e.Name())
+				break
+			}
+		}
+
+		if err := u.handleBackup(originalDir, svcInfo); err != nil {
+			global.LOG.Errorf("handle backup original file failed, err: %v", err)
+			_ = settingRepo.Update("SystemStatus", "Free")
+			return
+		}
+		itemLog := model.UpgradeLog{NodeID: 0, OldVersion: global.CONF.Base.Version, NewVersion: req.Version, BackupFile: baseDir}
+		_ = upgradeLogRepo.Create(&itemLog)
+
+		global.LOG.Info("backup original data successful, now start to upgrade!")
+
+		if err := files.CopyFileWithRename(path.Join(tmpDir, "1panel-core"), "/usr/local/bin/1panel-core"); err != nil {
+			global.LOG.Errorf("upgrade 1panel-core failed, err: %v", err)
+			_ = settingRepo.Update("SystemStatus", "Free")
+			u.handleRollback(originalDir, 1, svcInfo)
+			return
+		}
+		if err := files.CopyFileWithRename(path.Join(tmpDir, "1panel-agent"), "/usr/local/bin/1panel-agent"); err != nil {
+			global.LOG.Errorf("upgrade 1panel-agent failed, err: %v", err)
+			_ = settingRepo.Update("SystemStatus", "Free")
+			u.handleRollback(originalDir, 1, svcInfo)
+			return
+		}
+		if err := files.CopyItem(false, true, path.Join(tmpDir, "1pctl"), "/usr/local/bin"); err != nil {
+			global.LOG.Errorf("upgrade 1pctl failed, err: %v", err)
+			_ = settingRepo.Update("SystemStatus", "Free")
+			u.handleRollback(originalDir, 2, svcInfo)
+			return
+		}
+		if _, err := cmd.RunDefaultWithStdoutBashCf("sed -i -e 's#BASE_DIR=.*#BASE_DIR=%s#g' /usr/local/bin/1pctl", global.CONF.Base.InstallDir); err != nil {
+			global.LOG.Errorf("upgrade basedir in 1pctl failed, err: %v", err)
+			u.handleRollback(originalDir, 2, svcInfo)
+			return
+		}
+		if _, err := cmd.RunDefaultWithStdoutBashCf("sed -i -e 's#LANGUAGE=.*#LANGUAGE=%s#g' /usr/local/bin/1pctl", oldLang); err != nil {
+			global.LOG.Errorf("upgrade language in 1pctl failed, err: %v", err)
+			u.handleRollback(originalDir, 2, svcInfo)
+			return
+		}
+		initScriptPath := path.Join(tmpDir, "initscript")
+		if err := files.CopyItem(false, true, path.Join(initScriptPath, svcInfo.selCoreName), svcInfo.basePath); err != nil {
+			global.LOG.Errorf("upgrade %s failed, err: %v", svcInfo.coreName, err)
+			_ = settingRepo.Update("SystemStatus", "Free")
+			u.handleRollback(originalDir, 3, svcInfo)
+			return
+		}
+		if err := files.CopyItem(false, true, path.Join(initScriptPath, svcInfo.selAgentName), svcInfo.basePath); err != nil {
+			global.LOG.Errorf("upgrade %s failed, err: %v", svcInfo.agentName, err)
+			_ = settingRepo.Update("SystemStatus", "Free")
+			u.handleRollback(originalDir, 3, svcInfo)
+			return
+		}
+		if err := files.CopyItem(true, true, path.Join(tmpDir, "lang"), "/usr/local/bin"); err != nil {
+			global.LOG.Errorf("Update language files failed: %v", err)
+			_ = settingRepo.Update("SystemStatus", "Free")
+			u.handleRollback(originalDir, 4, svcInfo)
+		}
+		if err := files.CopyItem(false, true, path.Join(tmpDir, "GeoIP.mmdb"), path.Join(global.CONF.Base.InstallDir, "1panel/geo")); err != nil {
+			global.LOG.Warnf("Update GeoIP database failed: %v", err)
+		}
+
+		global.LOG.Info("upgrade successful!")
+		dropBackupCopies()
+		xpack.AutoUpgradeWithMaster()
+		_ = settingRepo.Update("SystemVersion", req.Version)
+		_ = global.AgentDB.Model(&model.Setting{}).Where("key = ?", "SystemVersion").Updates(map[string]interface{}{"value": req.Version}).Error
+		global.CONF.Base.Version = req.Version
+		_ = os.RemoveAll(downloadDir)
+		_ = os.Remove(req.FilePath)
+		_ = settingRepo.Update("SystemStatus", "Free")
 		controller.RestartPanel(true, true, true)
 	}()
 	return nil

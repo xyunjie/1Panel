@@ -123,7 +123,7 @@
                 </el-form-item>
 
                 <PushtoNode
-                    v-if="isMaster && isMasterProductPro && batchInstallSupport"
+                    v-if="isMaster && batchInstallSupport"
                     :push-node="formData.pushNode"
                     :nodes="formData.nodes"
                     type="app"
@@ -156,7 +156,7 @@ import CodemirrorPro from '@/components/codemirror-pro/index.vue';
 import { computeSizeFromMB } from '@/utils/util';
 import { loadResourceLimit } from '@/api/modules/container';
 import { useGlobalStore } from '@/composables/useGlobalStore';
-const { isOffLine, isMasterProductPro, isMaster } = useGlobalStore();
+const { isOffLine, isMaster } = useGlobalStore();
 
 const PushtoNode = defineAsyncComponent(async () => {
     const modules = import.meta.glob('@/xpack/views/ssl/index.vue');

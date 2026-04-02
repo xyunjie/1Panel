@@ -40,12 +40,7 @@
                             </el-text>
                         </template>
                     </el-table-column>
-                    <el-table-column
-                        v-if="globalStore.isProductPro"
-                        :label="$t('setting.scope')"
-                        :min-width="80"
-                        prop="isPublic"
-                    >
+                    <el-table-column :label="$t('setting.scope')" :min-width="80" prop="isPublic">
                         <template #default="{ row }">
                             <el-button plain size="small">
                                 {{ row.isPublic ? $t('setting.public') : $t('setting.private') }}
@@ -55,33 +50,6 @@
                     <el-table-column :label="$t('commons.table.type')" :min-width="100" prop="type">
                         <template #default="{ row }">
                             <el-tag>{{ $t('setting.' + row.type) }}</el-tag>
-                            <el-tooltip v-if="hasTokenRefresh(row)">
-                                <template #content>
-                                    {{ $t('setting.clickToRefresh') }}
-                                    <br />
-                                    <span v-if="row.varsJson['refresh_status'] === 'Success'">
-                                        {{ $t('setting.refreshStatus') + ':' + $t('commons.status.success') }}
-                                    </span>
-                                    <div v-else>
-                                        <span>
-                                            {{ $t('setting.refreshStatus') + ':' + $t('commons.status.failed') }}
-                                        </span>
-                                        <br />
-                                        <span>
-                                            {{ $t('commons.table.message') + ':' + row.varsJson['refresh_msg'] }}
-                                        </span>
-                                    </div>
-                                    <br />
-                                    {{ $t('setting.refreshTime') + ':' + row.varsJson['refresh_time'] }}
-                                </template>
-                                <el-button
-                                    type="primary"
-                                    link
-                                    icon="Refresh"
-                                    @click="refreshItemToken(row)"
-                                    class="ml-1"
-                                />
-                            </el-tooltip>
                         </template>
                     </el-table-column>
                     <el-table-column prop="bucket" label="Bucket" show-overflow-tooltip>
@@ -120,12 +88,11 @@
 <script setup lang="ts">
 import { dateFormat } from '@/utils/util';
 import { onMounted, ref } from 'vue';
-import { searchBackup, deleteBackup, refreshToken } from '@/api/modules/backup';
+import { searchBackup, deleteBackup } from '@/api/modules/backup';
 import Operate from '@/views/setting/backup-account/operate/index.vue';
 import DetailShow from '@/components/detail-show/index.vue';
 import { Backup } from '@/api/interface/backup';
 import i18n from '@/lang';
-import { MsgSuccess } from '@/utils/message';
 import { GlobalStore } from '@/store';
 import { Base64 } from 'js-base64';
 const globalStore = GlobalStore();
@@ -174,17 +141,10 @@ const search = async () => {
 };
 
 const loadEndpoint = (row: any) => {
-    if (row.type === 'COS' || row.type === 'MINIO' || row.type === 'OSS' || row.type === 'S3') {
+    if (row.type === 'MINIO' || row.type === 'S3') {
         return row.varsJson['endpoint'];
     }
-    if (row.type === 'KODO') {
-        return row.varsJson['domain'];
-    }
     return '';
-};
-
-const hasTokenRefresh = (row: any) => {
-    return row.type === 'OneDrive' || row.type === 'ALIYUN';
 };
 
 const onDelete = async (row: Backup.BackupInfo) => {
@@ -226,23 +186,15 @@ const onInspect = (row: any) => {
     if (row.type === 'S3') {
         list.push({ label: i18n.global.t('setting.mode'), value: row.varsJson['mode'] });
     }
-    if (row.type === 'COS' || row.type === 'KODO' || row.type === 'MINIO' || row.type === 'OSS' || row.type === 'S3') {
+    if (row.type === 'MINIO' || row.type === 'S3') {
         if (row.rememberAuth) {
             list.push({ label: 'Access Key ID', value: Base64.decode(row.accessKey) });
             list.push({ label: 'Secret Key', value: Base64.decode(row.credential) });
         }
     }
-    if (row.type === 'UPYUN') {
-        if (row.rememberAuth) {
-            list.push({ label: i18n.global.t('setting.operator'), value: Base64.decode(row.accessKey) });
-            list.push({ label: i18n.global.t('commons.login.password'), value: Base64.decode(row.credential) });
-        }
-    }
-    if (row.type === 'WebDAV' || row.type === 'SFTP') {
+    if (row.type === 'SFTP') {
         list.push({ label: i18n.global.t('setting.address'), value: row.varsJson['address'] || '' });
         list.push({ label: i18n.global.t('commons.login.username'), value: Base64.decode(row.accessKey) });
-    }
-    if (row.type === 'SFTP') {
         list.push({ label: i18n.global.t('commons.table.port'), value: row.varsJson['port'] || '' });
         if (row.rememberAuth) {
             list.push({ label: i18n.global.t('terminal.authMode'), value: row.varsJson['authMode'] });
@@ -254,40 +206,21 @@ const onInspect = (row: any) => {
             }
         }
     }
-    if (row.type === 'COS' || row.type === 'S3') {
+    if (row.type === 'S3') {
         list.push({ label: 'Region', value: row.varsJson['region'] || '' });
     }
-    if (row.type === 'COS' || row.type === 'KODO' || row.type === 'MINIO' || row.type === 'OSS' || row.type === 'S3') {
+    if (row.type === 'MINIO' || row.type === 'S3') {
         list.push({
-            label: row.type === 'KODO' ? i18n.global.t('setting.domain') : 'Endpoint',
+            label: 'Endpoint',
             value: row.varsJson['endpoint'] || '',
         });
         list.push({ label: 'Bucket', value: row.bucket });
     }
-    if (row.type === 'UPYUN') {
-        list.push({ label: i18n.global.t('setting.serviceName'), value: row.bucket });
-    }
-    if (row.type === 'COS' || row.type === 'OOS' || row.type === 'S3') {
+    if (row.type === 'S3') {
         list.push({ label: i18n.global.t('setting.scType'), value: row.varsJson['scType'] });
-    }
-    if (row.type === 'KODO') {
-        list.push({ label: i18n.global.t('cronjob.requestExpirationTime'), value: row.varsJson['timeout'] });
     }
     list.push({ label: i18n.global.t('setting.backupLabel'), value: row.backupPath });
     detailRef.value.acceptParams({ list: list });
-};
-
-const refreshItemToken = async (row: any) => {
-    loading.value = true;
-    await refreshToken({ id: row.id, name: row.name, isPublic: row.isPublic })
-        .then(() => {
-            loading.value = false;
-            MsgSuccess(i18n.global.t('commons.msg.operationSuccess'));
-            search();
-        })
-        .catch(() => {
-            loading.value = false;
-        });
 };
 
 const buttons = [

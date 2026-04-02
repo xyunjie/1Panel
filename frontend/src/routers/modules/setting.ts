@@ -55,18 +55,6 @@ const settingRouter = {
                     },
                 },
                 {
-                    path: 'license',
-                    name: 'License',
-                    component: () => import('@/views/setting/license/index.vue'),
-                    hidden: true,
-                    meta: {
-                        parent: 'menu.settings',
-                        title: 'setting.license',
-                        requiresAuth: true,
-                        activeMenu: '/settings',
-                    },
-                },
-                {
                     path: 'about',
                     name: 'About',
                     component: () => import('@/views/setting/about/index.vue'),

@@ -3,8 +3,10 @@ package common
 import (
 	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"math/big"
 	"net"
 	"os"
@@ -52,6 +54,23 @@ func Md5(val string) string {
 	hash := md5.New()
 	hash.Write([]byte(val))
 	return hex.EncodeToString(hash.Sum(nil))
+}
+
+func VerifyFileSHA256(filePath, expected string) error {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	actual := hex.EncodeToString(h.Sum(nil))
+	if actual != strings.ToLower(expected) {
+		return fmt.Errorf("sha256 mismatch: expected %s, got %s", expected, actual)
+	}
+	return nil
 }
 
 func LoadTimeZoneByCmd() string {

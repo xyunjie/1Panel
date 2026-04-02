@@ -10,7 +10,7 @@
 <script lang="ts" setup>
 import i18n from '@/lang';
 import { useGlobalStore } from '@/composables/useGlobalStore';
-const { isOffLine, isFxplay } = useGlobalStore();
+const { isFxplay } = useGlobalStore();
 
 const buttons = [
     {
@@ -34,21 +34,14 @@ const buttons = [
         path: '/settings/snapshot',
     },
     {
-        label: i18n.global.t('setting.license'),
-        path: '/settings/license',
-    },
-    {
         label: i18n.global.t('setting.about'),
         path: '/settings/about',
     },
 ];
 
 onMounted(() => {
-    if (isOffLine.value) {
-        buttons.splice(5, 1);
-    }
     if (isFxplay.value) {
-        buttons.splice(6, 1);
+        buttons.splice(5, 1);
     }
 });
 </script>

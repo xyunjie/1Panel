@@ -77,7 +77,6 @@ class RequestHttp {
                     return;
                 }
                 if (data.code == ResultEnum.ERRXPACK) {
-                    globalStore.isProductPro = false;
                     window.location.reload();
                     return Promise.reject(data);
                 }

@@ -247,24 +247,22 @@ const onSave = async (formEl: FormInstance | undefined) => {
         await formEl.validate(async (valid) => {
             if (!valid) return;
             form.themeColor = { light: form.light, dark: form.dark, themePredefineColors: themeColors.value };
-            if (globalStore.isMasterProductPro) {
-                await updateXpackSettingByKey('ThemeColor', JSON.stringify(form.themeColor));
-                MsgSuccess(i18n.global.t('commons.msg.operationSuccess'));
-                globalStore.themeConfig.themeColor = JSON.stringify(form.themeColor);
-                loading.value = false;
-                let color: string;
-                if (form.theme === 'auto') {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-                    color = prefersDark.matches ? form.dark : form.light;
-                } else {
-                    color = form.theme === 'dark' ? form.dark : form.light;
-                }
-                globalStore.themeConfig.primary = color;
-                setPrimaryColor(color);
-                initFavicon();
-                drawerVisible.value = false;
-                emit('search');
+            await updateXpackSettingByKey('ThemeColor', JSON.stringify(form.themeColor));
+            MsgSuccess(i18n.global.t('commons.msg.operationSuccess'));
+            globalStore.themeConfig.themeColor = JSON.stringify(form.themeColor);
+            loading.value = false;
+            let color: string;
+            if (form.theme === 'auto') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+                color = prefersDark.matches ? form.dark : form.light;
+            } else {
+                color = form.theme === 'dark' ? form.dark : form.light;
             }
+            globalStore.themeConfig.primary = color;
+            setPrimaryColor(color);
+            initFavicon();
+            drawerVisible.value = false;
+            emit('search');
         });
     });
 };
@@ -275,27 +273,25 @@ const onReSet = async () => {
         type: 'info',
     }).then(async () => {
         form.themeColor = { light: '#005eeb', dark: '#F0BE96', themePredefineColors: themeColors.value };
-        if (globalStore.isMasterProductPro) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultColors));
-            themeColors.value = { ...defaultColors };
-            darkColors = [...defaultDarkColors];
-            lightColors = [...defaultLightColors];
-            await updateXpackSettingByKey('ThemeColor', JSON.stringify(form.themeColor));
-            MsgSuccess(i18n.global.t('commons.msg.operationSuccess'));
-            loading.value = false;
-            globalStore.themeConfig.themeColor = JSON.stringify(form.themeColor);
-            let color: string;
-            if (form.theme === 'auto') {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-                color = prefersDark.matches ? '#F0BE96' : '#005eeb';
-            } else {
-                color = form.theme === 'dark' ? '#F0BE96' : '#005eeb';
-            }
-            globalStore.themeConfig.primary = color;
-            setPrimaryColor(color);
-            initFavicon();
-            drawerVisible.value = false;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultColors));
+        themeColors.value = { ...defaultColors };
+        darkColors = [...defaultDarkColors];
+        lightColors = [...defaultLightColors];
+        await updateXpackSettingByKey('ThemeColor', JSON.stringify(form.themeColor));
+        MsgSuccess(i18n.global.t('commons.msg.operationSuccess'));
+        loading.value = false;
+        globalStore.themeConfig.themeColor = JSON.stringify(form.themeColor);
+        let color: string;
+        if (form.theme === 'auto') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+            color = prefersDark.matches ? '#F0BE96' : '#005eeb';
+        } else {
+            color = form.theme === 'dark' ? '#F0BE96' : '#005eeb';
         }
+        globalStore.themeConfig.primary = color;
+        setPrimaryColor(color);
+        initFavicon();
+        drawerVisible.value = false;
     });
 };
 const handleClose = () => {

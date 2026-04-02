@@ -76,3 +76,5 @@ AGENTS.md
 opencode.json
 superpowers
 .worktrees/
+/docs/superpowers/
+/.superpowers/

@@ -7,12 +7,7 @@
                 </el-tag>
                 <el-input v-else v-model="dialogData.rowData!.name" />
             </el-form-item>
-            <el-form-item
-                v-if="globalStore.isProductPro"
-                :label="$t('setting.scope')"
-                prop="isPublic"
-                :rules="Rules.requiredSelect"
-            >
+            <el-form-item :label="$t('setting.scope')" prop="isPublic" :rules="Rules.requiredSelect">
                 <el-tag v-if="dialogData.title === 'edit'">
                     {{ dialogData.rowData!.isPublic ? $t('setting.public') : $t('setting.private') }}
                 </el-tag>
@@ -27,30 +22,10 @@
             <el-form-item :label="$t('commons.table.type')" prop="type" :rules="Rules.requiredSelect">
                 <el-tag v-if="dialogData.title === 'edit'">{{ $t('setting.' + dialogData.rowData!.type) }}</el-tag>
                 <el-select v-else v-model="dialogData.rowData!.type" @change="changeType">
-                    <el-option :label="$t('setting.OSS')" value="OSS"></el-option>
-                    <el-option :label="$t('setting.COS')" value="COS"></el-option>
                     <el-option :label="$t('setting.S3')" value="S3"></el-option>
-                    <el-option :label="$t('setting.OneDrive')" value="OneDrive"></el-option>
-                    <el-option :label="$t('setting.GoogleDrive')" value="GoogleDrive"></el-option>
-                    <el-option :label="$t('setting.ALIYUN')" value="ALIYUN"></el-option>
                     <el-option :label="$t('setting.MINIO')" value="MINIO"></el-option>
-                    <el-option :label="$t('setting.WebDAV')" value="WebDAV"></el-option>
                     <el-option :label="$t('setting.SFTP')" value="SFTP"></el-option>
-                    <el-option :label="$t('setting.KODO')" value="KODO"></el-option>
-                    <el-option :label="$t('setting.UPYUN')" value="UPYUN"></el-option>
                 </el-select>
-                <span v-if="isALIYUNYUN()" class="input-help">{{ $t('setting.ALIYUNHelper') }}</span>
-                <span v-if="dialogData.rowData?.type === 'GoogleDrive' && !globalStore.isFxplay" class="input-help">
-                    {{ $t('setting.googleHelper', [$t('setting.' + dialogData.rowData?.type)]) }}
-                    <el-link
-                        style="font-size: 12px; margin-left: 5px"
-                        icon="Position"
-                        @click="toDoc('google-drive')"
-                        type="primary"
-                    >
-                        {{ $t('firewall.quickJump') }}
-                    </el-link>
-                </span>
             </el-form-item>
             <el-form-item
                 v-if="dialogData.rowData!.type === 'S3'"
@@ -68,33 +43,6 @@
             </el-form-item>
             <el-form-item v-if="hasAccessKey()" label="Secret Key" prop="credential" :rules="Rules.requiredInput">
                 <el-input show-password clearable v-model.trim="dialogData.rowData!.credential" />
-            </el-form-item>
-            <div v-if="isUPYUN()">
-                <el-form-item :label="$t('setting.operator')" prop="accessKey" :rules="Rules.requiredInput">
-                    <el-input clearable v-model.trim="dialogData.rowData!.accessKey" />
-                </el-form-item>
-                <el-form-item :label="$t('commons.login.password')" prop="credential" :rules="Rules.requiredInput">
-                    <el-input show-password clearable v-model.trim="dialogData.rowData!.credential" />
-                </el-form-item>
-            </div>
-            <el-form-item
-                v-if="dialogData.rowData!.type === 'WebDAV'"
-                :label="$t('setting.address')"
-                prop="varsJson.address"
-                :rules="Rules.requiredInput"
-            >
-                <el-input v-model="dialogData.rowData!.varsJson['address']" />
-                <span class="input-help" v-if="!globalStore.isFxplay">
-                    {{ $t('setting.WebDAVAlist') }}
-                    <el-link
-                        style="font-size: 12px; margin-left: 5px"
-                        icon="Position"
-                        @click="toDoc('webdav')"
-                        type="primary"
-                    >
-                        {{ $t('firewall.quickJump') }}
-                    </el-link>
-                </span>
             </el-form-item>
             <div v-if="dialogData.rowData!.type === 'SFTP'">
                 <el-form-item :label="$t('setting.address')" prop="varsJson.address" :rules="Rules.host">
@@ -145,23 +93,6 @@
                 </el-checkbox>
             </el-form-item>
             <el-form-item
-                v-if="dialogData.rowData!.type === 'COS'"
-                label="Region"
-                prop="varsJson.region"
-                :rules="Rules.requiredInput"
-            >
-                <el-checkbox v-model="regionInput" :label="$t('container.input')" />
-                <el-select v-if="!regionInput" v-model="dialogData.rowData!.varsJson['region']" filterable clearable>
-                    <el-option v-for="item in cities" :key="item.value" :label="item.label" :value="item.value">
-                        <span class="float-left">{{ item.label }}</span>
-                        <span class="option-help">
-                            {{ item.value }}
-                        </span>
-                    </el-option>
-                </el-select>
-                <el-input v-else v-model.trim="dialogData.rowData!.varsJson['region']" />
-            </el-form-item>
-            <el-form-item
                 v-if="dialogData.rowData!.type === 'S3'"
                 label="Region"
                 prop="varsJson.region"
@@ -171,7 +102,7 @@
             </el-form-item>
             <el-form-item
                 v-if="hasAccessKey()"
-                :label="dialogData.rowData!.type === 'KODO' ? $t('setting.domain') : 'Endpoint'"
+                label="Endpoint"
                 prop="varsJson.endpointItem"
                 :rules="Rules.requiredInput"
             >
@@ -197,55 +128,6 @@
                 </div>
             </el-form-item>
             <el-form-item
-                v-if="isUPYUN()"
-                :label="$t('setting.serviceName')"
-                prop="bucket"
-                :rules="Rules.requiredInput"
-            >
-                <el-input v-model="dialogData.rowData!.bucket" />
-            </el-form-item>
-            <el-form-item
-                v-if="dialogData.rowData!.type === 'COS'"
-                :label="$t('setting.scType')"
-                prop="varsJson.scType"
-                :rules="[Rules.requiredSelect]"
-            >
-                <el-select v-model="dialogData.rowData!.varsJson['scType']">
-                    <el-option value="DEFAULT" :label="$t('setting.scLighthouse')" />
-                    <el-option value="Standard" :label="$t('setting.scStandard')" />
-                    <el-option value="Standard_IA" :label="$t('setting.scStandard_IA')" />
-                    <el-option value="Archive" :label="$t('setting.scArchive')" />
-                    <el-option value="Deep_Archive" :label="$t('setting.scDeep_Archive')" />
-                </el-select>
-                <el-alert
-                    v-if="dialogData.rowData!.varsJson['scType'] === 'Archive' || dialogData.rowData!.varsJson['scType'] === 'Deep_Archive'"
-                    class="mt-2.5"
-                    :closable="false"
-                    type="warning"
-                    :title="$t('setting.archiveHelper')"
-                />
-            </el-form-item>
-            <el-form-item
-                v-if="dialogData.rowData!.type === 'OSS'"
-                :label="$t('setting.scType')"
-                prop="varsJson.scType"
-                :rules="[Rules.requiredSelect]"
-            >
-                <el-select v-model="dialogData.rowData!.varsJson['scType']">
-                    <el-option value="Standard" :label="$t('setting.scStandard')" />
-                    <el-option value="IA" :label="$t('setting.scStandard_IA')" />
-                    <el-option value="Archive" :label="$t('setting.scArchive')" />
-                    <el-option value="ColdArchive" :label="$t('setting.scDeep_Archive')" />
-                </el-select>
-                <el-alert
-                    v-if="dialogData.rowData!.varsJson['scType'] === 'Archive' || dialogData.rowData!.varsJson['scType'] === 'ColdArchive'"
-                    class="mt-2.5"
-                    :closable="false"
-                    type="warning"
-                    :title="$t('setting.archiveHelper')"
-                />
-            </el-form-item>
-            <el-form-item
                 v-if="dialogData.rowData!.type === 'S3'"
                 :label="$t('setting.scType')"
                 prop="varsJson.scType"
@@ -265,103 +147,6 @@
                     :title="$t('setting.archiveHelper')"
                 />
             </el-form-item>
-            <el-form-item
-                v-if="dialogData.rowData!.type === 'KODO'"
-                :label="$t('cronjob.requestExpirationTime')"
-                prop="varsJson.timeout"
-            >
-                <el-input-number
-                    style="width: 200px"
-                    :min="1"
-                    step-strictly
-                    :step="1"
-                    v-model.number="dialogData.rowData!.varsJson['timeout']"
-                ></el-input-number>
-            </el-form-item>
-            <div v-if="isALIYUNYUN()">
-                <el-form-item label="Token" prop="varsJson.token">
-                    <div class="!w-full">
-                        <el-input
-                            style="width: calc(100% - 80px)"
-                            :rows="3"
-                            type="textarea"
-                            clearable
-                            v-model.trim="dialogData.rowData!.varsJson['token']"
-                        />
-                        <el-button class="append-button" @click="loadFromTokenForAliyun()">
-                            {{ $t('setting.analysis') }}
-                        </el-button>
-                        <span class="input-help" v-if="!globalStore.isFxplay">
-                            {{ $t('setting.analysisHelper') }}
-                            <el-link
-                                style="font-size: 12px; margin-left: 5px"
-                                icon="Position"
-                                @click="toDoc('ali-pan')"
-                                type="primary"
-                            >
-                                {{ $t('firewall.quickJump') }}
-                            </el-link>
-                        </span>
-                    </div>
-                </el-form-item>
-                <el-form-item label="Drive ID" prop="varsJson.drive_id" :rules="Rules.requiredInput">
-                    <el-input v-model.trim="dialogData.rowData!.varsJson['drive_id']" />
-                </el-form-item>
-                <el-form-item label="Refresh Token" prop="varsJson.refresh_token" :rules="Rules.requiredInput">
-                    <el-input v-model.trim="dialogData.rowData!.varsJson['refresh_token']" />
-                </el-form-item>
-            </div>
-
-            <div v-if="hasClient()">
-                <el-form-item v-if="isOneDrive()">
-                    <el-radio-group v-model="dialogData.rowData!.varsJson['isCN']" @change="changeClientFrom">
-                        <el-radio-button :value="false">{{ $t('setting.isNotCN') }}</el-radio-button>
-                        <el-radio-button :value="true">{{ $t('setting.isCN') }}</el-radio-button>
-                    </el-radio-group>
-                    <span class="input-help" v-if="!globalStore.isFxplay">
-                        {{ $t('setting.onedrive_helper') }}
-                        <el-link
-                            style="font-size: 12px; margin-left: 5px"
-                            icon="Position"
-                            @click="toDoc('onedrive')"
-                            type="primary"
-                        >
-                            {{ $t('firewall.quickJump') }}
-                        </el-link>
-                    </span>
-                </el-form-item>
-                <el-form-item :label="$t('setting.client_id')" prop="varsJson.client_id" :rules="Rules.requiredInput">
-                    <el-input v-model.trim="dialogData.rowData!.varsJson['client_id']" />
-                </el-form-item>
-                <el-form-item
-                    :label="$t('setting.client_secret')"
-                    prop="varsJson.client_secret"
-                    :rules="Rules.requiredInput"
-                >
-                    <el-input v-model.trim="dialogData.rowData!.varsJson['client_secret']" />
-                </el-form-item>
-                <el-form-item
-                    :label="$t('setting.redirect_uri')"
-                    prop="varsJson.redirect_uri"
-                    :rules="Rules.requiredInput"
-                >
-                    <el-input v-model.trim="dialogData.rowData!.varsJson['redirect_uri']" />
-                </el-form-item>
-                <el-form-item :label="$t('setting.code')" prop="varsJson.code">
-                    <div class="!w-full">
-                        <el-input
-                            style="width: calc(100% - 80px)"
-                            :rows="3"
-                            type="textarea"
-                            clearable
-                            v-model.trim="dialogData.rowData!.varsJson['code']"
-                        />
-                        <el-button class="append-button" @click="jumpForCode(formRef)">
-                            {{ $t('setting.loadCode') }}
-                        </el-button>
-                    </div>
-                </el-form-item>
-            </div>
             <el-form-item v-if="hasBackDir()" :label="$t('setting.backupDir')" prop="backupPath">
                 <el-input clearable v-model.trim="dialogData.rowData!.backupPath" placeholder="/1panel" />
             </el-form-item>
@@ -408,25 +193,19 @@ import i18n from '@/lang';
 import { ElForm } from 'element-plus';
 import { Backup } from '@/api/interface/backup';
 import FileList from '@/components/file-list/index.vue';
-import { addBackup, checkBackup, editBackup, getClientInfo, listBucket } from '@/api/modules/backup';
-import { cities } from './../helper';
-import { dateFormat, deepCopy, spliceHttp, splitHttp } from '@/utils/util';
+import { addBackup, checkBackup, editBackup, listBucket } from '@/api/modules/backup';
+import { deepCopy, spliceHttp, splitHttp } from '@/utils/util';
 import { MsgError, MsgSuccess } from '@/utils/message';
 import { Base64 } from 'js-base64';
-import { GlobalStore } from '@/store';
-const globalStore = GlobalStore();
 
 const loading = ref(false);
 type FormInstance = InstanceType<typeof ElForm>;
 const formRef = ref<FormInstance>();
 const buckets = ref();
-const clientInfo = ref();
 const fileRef = ref();
 
 const isOK = ref();
 const stopWatch = ref();
-
-const regionInput = ref();
 
 const domainProto = ref('http');
 const emit = defineEmits(['search']);
@@ -473,7 +252,7 @@ const acceptParams = (params: DialogProps): void => {
         : {};
     title.value = i18n.global.t('commons.button.' + dialogData.value.title);
     if (dialogData.value.title === 'create') {
-        dialogData.value.rowData!.type = 'OSS';
+        dialogData.value.rowData!.type = 'S3';
         changeType();
         drawerVisible.value = true;
         return;
@@ -481,9 +260,6 @@ const acceptParams = (params: DialogProps): void => {
     buckets.value = [];
     if (hasAccessKey()) {
         let itemJson = dialogData.value.rowData!.varsJson['endpoint'];
-        if (dialogData.value.rowData!.type === 'KODO') {
-            itemJson = dialogData.value.rowData!.varsJson['domain'];
-        }
         let httpItem = splitHttp(itemJson);
         dialogData.value.rowData!.varsJson['endpointItem'] = httpItem.url;
         domainProto.value = httpItem.proto;
@@ -492,101 +268,18 @@ const acceptParams = (params: DialogProps): void => {
         dialogData.value.rowData!.accessKey = Base64.decode(dialogData.value.rowData!.accessKey);
         dialogData.value.rowData!.credential = Base64.decode(dialogData.value.rowData!.credential);
     }
-    if (dialogData.value.rowData!.varsJson['timeout'] === undefined) {
-        dialogData.value.rowData!.varsJson['timeout'] = 1;
-    }
     drawerVisible.value = true;
 };
-const toDoc = (type: string) => {
-    let uri = '';
-    switch (type) {
-        case 'onedrive':
-            uri = '#42-onedrive';
-            break;
-        case 'onedrive-bind':
-            uri = '#43-onedrive';
-            break;
-        case 'ali-pan':
-            uri = '#44';
-            break;
-        case 'google-drive':
-            uri = '#45';
-            break;
-        case 'webdav':
-            uri = '#46-webdav-alist';
-            break;
-    }
-    window.open(globalStore.docsUrl + '/user_manual/settings/' + uri, '_blank', 'noopener,noreferrer');
-};
-const jumpForCode = async (formEl: FormInstance | undefined) => {
-    if (!formEl) return;
-    const result = await formEl.validateField('varsJson.client_id', callback);
-    if (!result) {
-        return;
-    }
-    const result1 = await formEl.validateField('varsJson.redirect_uri', callback);
-    if (!result1) {
-        return;
-    }
-    let client_id = dialogData.value.rowData.varsJson['client_id'];
-    let redirect_uri = dialogData.value.rowData.varsJson['redirect_uri'];
-    if (isOneDrive()) {
-        let commonUrl = `response_type=code&client_id=${client_id}&redirect_uri=${redirect_uri}&scope=offline_access+Files.ReadWrite.All+User.Read`;
-        if (!dialogData.value.rowData!.varsJson['isCN']) {
-            window.open('https://login.microsoftonline.com/common/oauth2/v2.0/authorize?' + commonUrl, '_blank');
-        } else {
-            window.open('https://login.chinacloudapi.cn/common/oauth2/v2.0/authorize?' + commonUrl, '_blank');
-        }
-        return;
-    }
-
-    let url = `https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?client_id=${client_id}&response_type=code&redirect_uri=${redirect_uri}&scope=openid%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fphotoslibrary&access_type=offline&prompt=consent&service=lso&o2v=1&ddm=1&flowName=GeneralOAuthFlow`;
-    window.open(url, '_blank');
-};
-function callback(error: any) {
-    if (error) {
-        return error.message;
-    } else {
-        return;
-    }
-}
-
-const loadFromTokenForAliyun = () => {
-    const obj = JSON.parse(dialogData.value.rowData!.varsJson['token']);
-    dialogData.value.rowData!.varsJson['drive_id'] = obj.default_drive_id;
-    dialogData.value.rowData!.varsJson['refresh_token'] = obj.refresh_token;
-};
 const hasRemember = () => {
-    return (
-        dialogData.value.rowData!.type !== 'LOCAL' &&
-        dialogData.value.rowData!.type !== 'OneDrive' &&
-        dialogData.value.rowData!.type !== 'ALIYUN' &&
-        dialogData.value.rowData!.type !== 'GoogleDrive'
-    );
-};
-const hasClient = () => {
-    let itemType = dialogData.value.rowData!.type;
-    return itemType === 'OneDrive' || itemType === 'GoogleDrive';
-};
-const isOneDrive = () => {
-    let itemType = dialogData.value.rowData!.type;
-    return itemType === 'OneDrive';
-};
-const isUPYUN = () => {
-    let itemType = dialogData.value.rowData!.type;
-    return itemType === 'UPYUN';
-};
-const isALIYUNYUN = () => {
-    let itemType = dialogData.value.rowData!.type;
-    return itemType === 'ALIYUN';
+    return dialogData.value.rowData!.type !== 'LOCAL';
 };
 const hasAccessKey = () => {
     let itemType = dialogData.value.rowData!.type;
-    return itemType === 'COS' || itemType === 'KODO' || itemType === 'MINIO' || itemType === 'OSS' || itemType === 'S3';
+    return itemType === 'MINIO' || itemType === 'S3';
 };
 const hasPassword = () => {
     let itemType = dialogData.value.rowData!.type;
-    return itemType === 'SFTP' || itemType === 'WebDAV';
+    return itemType === 'SFTP';
 };
 
 const hasBackDir = () => {
@@ -598,34 +291,14 @@ const loadDir = async (path: string) => {
     dialogData.value.rowData!.backupPath = path;
 };
 
-const changeType = async () => {
+const changeType = () => {
     buckets.value = [];
     dialogData.value.rowData!.varsJson = {};
     dialogData.value.rowData!.rememberAuth = false;
     switch (dialogData.value.rowData!.type) {
-        case 'COS':
-        case 'OSS':
-            dialogData.value.rowData.varsJson['scType'] = 'Standard';
-            break;
         case 'S3':
             dialogData.value.rowData.varsJson['scType'] = 'STANDARD';
             dialogData.value.rowData.varsJson['mode'] = 'virtual hosted';
-            break;
-        case 'KODO':
-            dialogData.value.rowData!.varsJson['timeout'] = 1;
-            break;
-        case 'OneDrive':
-            dialogData.value.rowData.varsJson['isCN'] = false;
-            const res = await getClientInfo('Onedrive');
-            clientInfo.value = res.data;
-            if (!dialogData.value.rowData.id) {
-                dialogData.value.rowData.varsJson = {
-                    isCN: false,
-                    client_id: res.data.client_id,
-                    client_secret: res.data.client_secret,
-                    redirect_uri: res.data.redirect_uri,
-                };
-            }
             break;
         case 'SFTP':
             dialogData.value.rowData.varsJson['port'] = 22;
@@ -633,23 +306,14 @@ const changeType = async () => {
             break;
     }
 };
-const changeClientFrom = () => {
-    if (dialogData.value.rowData.varsJson['isCN']) {
-        dialogData.value.rowData.varsJson = {
-            isCN: true,
-            client_id: '',
-            client_secret: '',
-            redirect_uri: '',
-        };
+
+function callback(error: any) {
+    if (error) {
+        return error.message;
     } else {
-        dialogData.value.rowData.varsJson = {
-            isCN: false,
-            client_id: clientInfo.value.client_id,
-            client_secret: clientInfo.value.client_secret,
-            redirect_uri: clientInfo.value.redirect_uri,
-        };
+        return;
     }
-};
+}
 
 const handleClose = () => {
     emit('search');
@@ -668,11 +332,7 @@ const getBuckets = async (formEl: FormInstance | undefined) => {
     loading.value = true;
     let item = deepCopy(dialogData.value.rowData!.varsJson);
     let itemEndpoint = loadEndpoint();
-    if (dialogData.value.rowData!.type === 'KODO') {
-        item['domain'] = itemEndpoint;
-    } else {
-        item['endpoint'] = itemEndpoint;
-    }
+    item['endpoint'] = itemEndpoint;
     item['endpointItem'] = undefined;
     listBucket({
         isPublic: dialogData.value.rowData!.isPublic,
@@ -707,19 +367,7 @@ const onCheck = async (formEl: FormInstance | undefined) => {
         if (!dialogData.value.rowData) return;
         if (hasAccessKey()) {
             let itemEndpoint = loadEndpoint();
-            if (dialogData.value.rowData!.type === 'KODO') {
-                dialogData.value.rowData!.varsJson['domain'] = itemEndpoint;
-            } else {
-                dialogData.value.rowData!.varsJson['endpoint'] = itemEndpoint;
-            }
-        }
-        if (isOneDrive()) {
-            dialogData.value.rowData!.varsJson['code'] = decodeURIComponent(
-                dialogData.value.rowData!.varsJson['code'] || '',
-            );
-        }
-        if (isALIYUNYUN()) {
-            dialogData.value.rowData!.varsJson['token'] = undefined;
+            dialogData.value.rowData!.varsJson['endpoint'] = itemEndpoint;
         }
         dialogData.value.rowData.vars = JSON.stringify(dialogData.value.rowData!.varsJson);
         loading.value = true;
@@ -729,15 +377,6 @@ const onCheck = async (formEl: FormInstance | undefined) => {
                 if (res.data.isOk) {
                     isOK.value = true;
                     MsgSuccess(i18n.global.t('terminal.connTestOk'));
-                    if (hasClient()) {
-                        dialogData.value.rowData!.varsJson['refresh_token'] = Base64.decode(res.data.token);
-                        dialogData.value.rowData!.varsJson['refresh_status'] = 'Success';
-                        dialogData.value.rowData!.varsJson['refresh_time'] = dateFormat(null, null, new Date());
-                    }
-                    if (isALIYUNYUN()) {
-                        dialogData.value.rowData!.varsJson['refresh_status'] = 'Success';
-                        dialogData.value.rowData!.varsJson['refresh_time'] = dateFormat(null, null, new Date());
-                    }
                     startWatcher();
                     return;
                 }

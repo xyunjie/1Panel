@@ -692,13 +692,6 @@
                                     <el-form-item prop="hasAlert">
                                         <el-checkbox v-model="form.hasAlert" :label="$t('xpack.alert.isAlert')" />
                                         <span class="input-help">{{ $t('xpack.alert.cronJobHelper') }}</span>
-
-                                        <span class="input-help logText" v-if="form.hasAlert && !isProductPro">
-                                            {{ $t('xpack.alert.licenseHelper') }}
-                                            <el-link class="link" @click="toUpload" type="primary">
-                                                {{ $t('license.levelUpPro') }}
-                                            </el-link>
-                                        </span>
                                     </el-form-item>
                                 </LayoutCol>
                             </el-row>
@@ -716,38 +709,25 @@
                                             cleanable
                                         >
                                             <el-option value="mail" :label="$t('xpack.alert.mail')" />
-                                            <el-option
-                                                v-if="!isProductPro"
-                                                value="bark"
-                                                :label="$t('xpack.alert.bark')"
-                                            />
+                                            <el-option value="bark" :label="$t('xpack.alert.bark')" />
                                             <el-option
                                                 value="weCom"
                                                 v-if="!globalStore.isIntl"
-                                                :disabled="!form.hasAlert || !isProductPro"
                                                 :label="$t('xpack.alert.weCom')"
                                             />
                                             <el-option
                                                 value="dingTalk"
                                                 v-if="!globalStore.isIntl"
-                                                :disabled="!form.hasAlert || !isProductPro"
                                                 :label="$t('xpack.alert.dingTalk')"
                                             />
                                             <el-option
                                                 value="feiShu"
                                                 v-if="!globalStore.isIntl"
-                                                :disabled="!form.hasAlert || !isProductPro"
                                                 :label="$t('xpack.alert.feiShu')"
-                                            />
-                                            <el-option
-                                                v-if="isProductPro"
-                                                value="bark"
-                                                :label="$t('xpack.alert.bark')"
                                             />
                                             <el-option
                                                 value="sms"
                                                 v-if="!globalStore.isIntl"
-                                                :disabled="!form.hasAlert || !isProductPro"
                                                 :label="$t('xpack.alert.sms')"
                                             />
                                         </el-select>
@@ -827,7 +807,6 @@
     <FileList ref="scriptFileRef" @choose="loadScriptDir" />
     <FileList ref="dirRef" @choose="loadDir" />
     <FileList ref="fileRef" @choose="loadFile" />
-    <LicenseImport ref="licenseRef" />
 </template>
 
 <script lang="ts" setup>
@@ -864,7 +843,6 @@ import { loadUsers } from '@/api/modules/toolbox';
 import { loadContainerUsers } from '@/api/modules/container';
 import { storeToRefs } from 'pinia';
 import { GlobalStore } from '@/store';
-import LicenseImport from '@/components/license-import/index.vue';
 import { splitTimeFromSecond, transferTimeToSecond } from '@/utils/util';
 import { getGroupList } from '@/api/modules/group';
 import { routerToName, routerToPath } from '@/utils/router';
@@ -872,11 +850,10 @@ import { loadBaseDir } from '@/api/modules/setting';
 const router = useRouter();
 
 const globalStore = GlobalStore();
-const licenseRef = ref();
 const scriptFileRef = ref();
 const dirRef = ref();
 const fileRef = ref();
-const { isProductPro, isFxplay } = storeToRefs(globalStore);
+const { isFxplay } = storeToRefs(globalStore);
 const loading = ref();
 const nextTimes = ref([]);
 
@@ -1582,10 +1559,6 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
         MsgSuccess(i18n.global.t('commons.msg.operationSuccess'));
         goBack();
     });
-};
-
-const toUpload = () => {
-    licenseRef.value.acceptParams();
 };
 
 onMounted(() => {

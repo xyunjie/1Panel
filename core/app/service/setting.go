@@ -136,12 +136,6 @@ func (u *SettingService) Update(key, value string) error {
 		return nil
 	}
 	switch key {
-	case "AppStoreLastModified":
-		exist, _ := settingRepo.Get(repo.WithByKey("AppStoreLastModified"))
-		if exist.ID == 0 {
-			_ = settingRepo.Create("AppStoreLastModified", value)
-			return nil
-		}
 	case "HideMenu":
 		var menus []dto.ShowMenu
 		if err := json.Unmarshal([]byte(value), &menus); err != nil {

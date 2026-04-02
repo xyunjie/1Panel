@@ -3,7 +3,7 @@
         <RouterButton :buttons="routerButton" />
         <LayoutContent :title="$t('website.ssl', 2)">
             <template #leftToolBar>
-                <el-button type="primary" @click="openSSL()">
+                <el-button type="primary" @click="openSSL()" v-if="!isOffLine">
                     {{ $t('ssl.create') }}
                 </el-button>
                 <el-button type="primary" @click="openUpload()">
@@ -12,10 +12,10 @@
                 <el-button type="primary" plain @click="openCA()">
                     {{ $t('ssl.selfSigned') }}
                 </el-button>
-                <el-button type="primary" plain @click="openAcmeAccount()">
+                <el-button type="primary" plain @click="openAcmeAccount()" v-if="!isOffLine">
                     {{ $t('website.acmeAccountManage') }}
                 </el-button>
-                <el-button type="primary" plain @click="openDnsAccount()">
+                <el-button type="primary" plain @click="openDnsAccount()" v-if="!isOffLine">
                     {{ $t('website.dnsAccountManage') }}
                 </el-button>
                 <el-button plain @click="deletessl(null)" :disabled="selects.length === 0">
@@ -63,6 +63,7 @@
                         <template #default="{ row }">{{ getProvider(row.provider) }}</template>
                     </el-table-column>
                     <el-table-column
+                        v-if="!isOffLine"
                         :label="$t('ssl.acmeAccount')"
                         show-overflow-tooltip
                         prop="acmeAccount.email"
@@ -174,6 +175,7 @@
 
 <script lang="ts" setup>
 import { onMounted, reactive, ref, computed } from 'vue';
+import { storeToRefs } from 'pinia';
 import { deleteSSL, downloadFile, searchSSL, updateSSL } from '@/api/modules/website';
 import DnsAccount from './dns-account/index.vue';
 import AcmeAccount from './acme-account/index.vue';
@@ -192,6 +194,7 @@ import Obtain from './obtain/index.vue';
 import MsgInfo from '@/components/msg-info/index.vue';
 
 const globalStore = GlobalStore();
+const { isOffLine } = storeToRefs(globalStore);
 const paginationConfig = reactive({
     cacheSizeKey: 'ssl-page-size',
     currentPage: 1,

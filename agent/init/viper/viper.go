@@ -50,6 +50,7 @@ func Init() {
 	}
 
 	global.CONF = serverConfig
+	global.CONF.Base.IsOffLine = true
 
 	initBaseInfo()
 	global.Viper = v

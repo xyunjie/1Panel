@@ -49,11 +49,8 @@ const GlobalStore = defineStore({
         defaultIO: 'all',
         isFxplay: false,
 
-        isProductPro: false,
         isIntl: false,
         docWithRegion: true,
-        productProExpires: 0,
-        isMasterProductPro: false,
         isOffLine: false,
 
         masterAlias: '',
@@ -64,7 +61,7 @@ const GlobalStore = defineStore({
         isDarkTheme: (state) =>
             state.themeConfig.theme === 'dark' ||
             (state.themeConfig.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches),
-        isDarkGoldTheme: (state) => state.themeConfig.primary === '#F0BE96' && state.isProductPro,
+        isDarkGoldTheme: (state) => state.themeConfig.primary === '#F0BE96',
         docsUrl: (state) => {
             if (state.docWithRegion) {
                 return state.isIntl ? INTL_DOCS_URL : CN_DOCS_URL;
@@ -113,9 +110,6 @@ const GlobalStore = defineStore({
         },
         getMasterAlias() {
             return this.masterAlias || i18n.global.t('xpack.node.master');
-        },
-        isMasterPro() {
-            return this.isMasterProductPro;
         },
         setLastFilePath(path: string) {
             this.lastFilePath = path;

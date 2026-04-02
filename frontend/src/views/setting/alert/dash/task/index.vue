@@ -322,32 +322,15 @@
                     <el-form-item :label="$t('xpack.alert.alertMethod')" prop="sendMethod">
                         <el-select class="selectClass" v-model="dialogData.rowData!.sendMethod" multiple cleanable>
                             <el-option value="mail" :label="$t('xpack.alert.mail')" />
-                            <el-option v-if="!globalStore.isProductPro" value="bark" :label="$t('xpack.alert.bark')" />
-                            <el-option
-                                value="weCom"
-                                v-if="!globalStore.isIntl"
-                                :disabled="!globalStore.isProductPro"
-                                :label="$t('xpack.alert.weCom')"
-                            />
+                            <el-option value="bark" :label="$t('xpack.alert.bark')" />
+                            <el-option value="weCom" v-if="!globalStore.isIntl" :label="$t('xpack.alert.weCom')" />
                             <el-option
                                 value="dingTalk"
                                 v-if="!globalStore.isIntl"
-                                :disabled="!globalStore.isProductPro"
                                 :label="$t('xpack.alert.dingTalk')"
                             />
-                            <el-option
-                                value="feiShu"
-                                v-if="!globalStore.isIntl"
-                                :disabled="!globalStore.isProductPro"
-                                :label="$t('xpack.alert.feiShu')"
-                            />
-                            <el-option v-if="globalStore.isProductPro" value="bark" :label="$t('xpack.alert.bark')" />
-                            <el-option
-                                value="sms"
-                                v-if="!globalStore.isIntl"
-                                :disabled="!globalStore.isProductPro"
-                                :label="$t('xpack.alert.sms')"
-                            />
+                            <el-option value="feiShu" v-if="!globalStore.isIntl" :label="$t('xpack.alert.feiShu')" />
+                            <el-option value="sms" v-if="!globalStore.isIntl" :label="$t('xpack.alert.sms')" />
                         </el-select>
                     </el-form-item>
                     <span class="input-help">
@@ -391,7 +374,7 @@ import { routerToName } from '@/utils/router';
 import { checkCidr, checkCidrV6, checkIpV4V6 } from '@/utils/util';
 
 const globalStore = GlobalStore();
-const { isMaster, isProductPro } = storeToRefs(globalStore);
+const { isMaster } = storeToRefs(globalStore);
 
 interface DialogProps {
     title: string;
@@ -461,10 +444,10 @@ const allTaskOptions = [
     { value: 'panelPwdEndTime', label: 'xpack.alert.panelPwdEndTime', show: isMaster.value },
     { value: 'panelLogin', label: 'xpack.alert.panelLogin', show: isMaster.value },
     { value: 'sshLogin', label: 'xpack.alert.sshLogin', show: true },
-    { value: 'licenseException', label: 'xpack.alert.licenseException', show: isMaster.value && isProductPro.value },
+    { value: 'licenseException', label: 'xpack.alert.licenseException', show: isMaster.value },
     { value: 'ssl', label: 'xpack.alert.ssl', show: true },
     { value: 'siteEndTime', label: 'xpack.alert.siteEndTime', show: true },
-    { value: 'nodeException', label: 'xpack.alert.nodeException', show: isMaster.value && isProductPro.value },
+    { value: 'nodeException', label: 'xpack.alert.nodeException', show: isMaster.value },
     { value: 'cpu', label: 'xpack.alert.cpu', show: true },
     { value: 'memory', label: 'xpack.alert.memory', show: true },
     { value: 'disk', label: 'xpack.alert.disk', show: true },

@@ -36,10 +36,6 @@ type SettingInfo struct {
 	MFAStatus                  string `json:"mfaStatus"`
 	MFAInterval                string `json:"mfaInterval"`
 
-	AppStoreVersion      string `json:"appStoreVersion"`
-	AppStoreLastModified string `json:"appStoreLastModified"`
-	AppStoreSyncStatus   string `json:"appStoreSyncStatus"`
-
 	HideMenu      string `json:"hideMenu"`
 	NoAuthSetting string `json:"noAuthSetting"`
 
@@ -152,6 +148,12 @@ type BindInfo struct {
 
 type Upgrade struct {
 	Version string `json:"version" validate:"required"`
+}
+
+type UpgradeByFile struct {
+	FilePath string `json:"filePath" validate:"required"`
+	Version  string `json:"version" validate:"required"`
+	Checksum string `json:"checksum"`
 }
 
 type ReleasesNotes struct {

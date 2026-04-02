@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"path"
 	"strconv"
@@ -22,7 +21,6 @@ import (
 	"github.com/1Panel-dev/1Panel/agent/utils/cmd"
 	"github.com/1Panel-dev/1Panel/agent/utils/common"
 	"github.com/1Panel-dev/1Panel/agent/utils/files"
-	"github.com/1Panel-dev/1Panel/agent/utils/req_helper"
 	"gorm.io/gorm"
 )
 
@@ -1598,22 +1596,4 @@ func generateToken() string {
 		return ""
 	}
 	return hex.EncodeToString(bytes)
-}
-
-func asyncReportAIProviderInstall(provider string) {
-	if global.CONF.Base.Mode != "stable" {
-		return
-	}
-	provider = provider
-	if provider == "" {
-		return
-	}
-	go func(provider string) {
-		query := url.Values{}
-		query.Set("product", "ai-provider")
-		query.Set("type", "install")
-		query.Set("version", provider)
-		reqURL := "https://community.fit2cloud.com/installation-analytics?" + query.Encode()
-		_, _, _ = req_helper.HandleRequest(reqURL, http.MethodGet, constant.TimeOut5s)
-	}(provider)
 }

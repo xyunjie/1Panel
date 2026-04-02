@@ -1,8 +1,5 @@
 import { jumpToPath } from './util';
 import router from '@/routers';
-import { GlobalStore } from '@/store';
-
-const globalStore = GlobalStore();
 
 export const jumpToInstall = (type: string, key: string) => {
     switch (type) {
@@ -30,17 +27,14 @@ export const jumpToInstall = (type: string, key: string) => {
             });
             return true;
         case 'vllm':
-            if (globalStore.isProductPro) {
-                router.push({
-                    path: '/ai/model/vllm',
-                    query: {
-                        uncached: 'true',
-                        open: 'create',
-                    },
-                });
-                return true;
-            }
-            return false;
+            router.push({
+                path: '/ai/model/vllm',
+                query: {
+                    uncached: 'true',
+                    open: 'create',
+                },
+            });
+            return true;
         case 'mysql-cluster':
             jumpToPath(router, '/xpack/cluster/mysql');
             return true;

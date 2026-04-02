@@ -11,7 +11,6 @@ func commonGroups() []CommonRouter {
 		&CronjobRouter{},
 		&BackupRouter{},
 		&SettingRouter{},
-		&AppRouter{},
 		&WebsiteRouter{},
 		&WebsiteDnsAccountRouter{},
 		&WebsiteAcmeAccountRouter{},

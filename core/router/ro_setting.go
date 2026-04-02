@@ -43,6 +43,7 @@ func (s *SettingRouter) InitRouter(Router *gin.RouterGroup) {
 		settingRouter.DELETE("/passkey/:id", baseApi.PasskeyDelete)
 
 		settingRouter.POST("/upgrade", baseApi.Upgrade)
+		settingRouter.POST("/upgrade/file", baseApi.UpgradeByFile)
 		settingRouter.POST("/upgrade/notes", baseApi.GetNotesByVersion)
 		settingRouter.GET("/upgrade/releases", baseApi.LoadRelease)
 		settingRouter.GET("/upgrade", baseApi.GetUpgradeInfo)

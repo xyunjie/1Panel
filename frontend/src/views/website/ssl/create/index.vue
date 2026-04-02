@@ -29,7 +29,11 @@
             <el-form-item :label="$t('website.remark')" prop="description">
                 <el-input v-model="ssl.description"></el-input>
             </el-form-item>
-            <el-form-item :label="$t('website.acmeAccount')" prop="acmeAccountId" v-if="ssl.provider != 'selfSigned'">
+            <el-form-item
+                :label="$t('website.acmeAccount')"
+                prop="acmeAccountId"
+                v-if="ssl.provider != 'selfSigned' && !isOffLine"
+            >
                 <el-select v-model="ssl.acmeAccountId">
                     <el-option
                         v-for="(acme, index) in acmeAccounts"
@@ -61,7 +65,11 @@
                     ></el-option>
                 </el-select>
             </el-form-item>
-            <el-form-item :label="$t('website.provider')" prop="provider" v-if="ssl.provider != 'selfSigned'">
+            <el-form-item
+                :label="$t('website.provider')"
+                prop="provider"
+                v-if="ssl.provider != 'selfSigned' && !isOffLine"
+            >
                 <el-radio-group v-model="ssl.provider" @change="changeProvider()">
                     <el-radio value="dnsAccount" :disabled="ssl.isIP">{{ $t('website.dnsAccount') }}</el-radio>
                     <el-radio value="dnsManual" :disabled="ssl.isIP">{{ $t('website.dnsManual') }}</el-radio>
@@ -74,7 +82,11 @@
                     {{ $t('ssl.httpHelper') }}
                 </span>
             </el-form-item>
-            <el-form-item :label="$t('website.dnsAccount')" prop="dnsAccountId" v-if="ssl.provider === 'dnsAccount'">
+            <el-form-item
+                :label="$t('website.dnsAccount')"
+                prop="dnsAccountId"
+                v-if="ssl.provider === 'dnsAccount' && !isOffLine"
+            >
                 <el-select v-model="ssl.dnsAccountId">
                     <el-option
                         v-for="(dns, index) in dnsAccounts"
@@ -98,7 +110,7 @@
             <el-form-item :label="''" prop="autoRenew" v-if="ssl.provider !== 'dnsManual'">
                 <el-checkbox v-model="ssl.autoRenew" :label="$t('ssl.autoRenew')" />
             </el-form-item>
-            <div v-if="ssl.provider != 'selfSigned'">
+            <div v-if="ssl.provider != 'selfSigned' && !isOffLine">
                 <el-form-item :label="''" prop="disableCNAME">
                     <el-checkbox v-model="ssl.disableCNAME" :label="$t('ssl.disableCNAME')" />
                     <span class="input-help">
@@ -146,7 +158,7 @@
                     </span>
                 </el-form-item>
                 <PushtoNode
-                    v-if="isMaster && isMasterProductPro"
+                    v-if="isMaster"
                     :push-node="ssl.pushNode"
                     :nodes="ssl.pushNodes"
                     type="ssl"
@@ -180,7 +192,7 @@ import { KeyTypes } from '@/global/mimetype';
 import { getDNSName, getAccountName } from '@/utils/util';
 import { defineAsyncComponent } from 'vue';
 import { useGlobalStore } from '@/composables/useGlobalStore';
-const { isMasterProductPro, isMaster } = useGlobalStore();
+const { isMaster, isOffLine } = useGlobalStore();
 
 const PushtoNode = defineAsyncComponent(async () => {
     const modules = import.meta.glob('@/xpack/views/ssl/index.vue');

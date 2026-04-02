@@ -46,7 +46,7 @@
                     <el-form-item prop="hasSpec">
                         <el-checkbox v-model="dialogData.rowData!.hasSpec" :label="$t('toolbox.clam.cron')" />
                     </el-form-item>
-                    <el-form-item prop="spec" v-if="dialogData.rowData!.hasSpec && isProductPro">
+                    <el-form-item prop="spec" v-if="dialogData.rowData!.hasSpec">
                         <div class="grid sm:grid-cols-4 gap-4 grid-cols-1">
                             <el-select v-model="dialogData.rowData!.specObj.specType" @change="changeSpecType()">
                                 <el-option
@@ -117,31 +117,13 @@
                             </el-input>
                         </div>
                     </el-form-item>
-                    <div v-if="globalStore.isIntl">
-                        <el-form-item v-if="(dialogData.rowData!.hasSpec) && !isProductPro">
-                            <span class="input-help logText">
-                                {{ $t('toolbox.clam.alertHelper') }}
-                                <el-link class="link" type="primary" @click="toUpload">
-                                    {{ $t('license.levelUpPro') }}
-                                </el-link>
-                            </span>
-                        </el-form-item>
-                    </div>
+                    <div v-if="globalStore.isIntl"></div>
                     <div v-if="!globalStore.isIntl">
                         <el-form-item prop="hasAlert">
                             <el-checkbox v-model="dialogData.rowData!.hasAlert" :label="$t('xpack.alert.isAlert')" />
                             <span class="input-help">{{ $t('xpack.alert.clamHelper') }}</span>
                         </el-form-item>
-                        <el-form-item
-                            v-if="(dialogData.rowData!.hasAlert || dialogData.rowData!.hasSpec) && !isProductPro"
-                        >
-                            <span class="input-help logText">
-                                {{ $t('toolbox.clam.alertHelper') }}
-                                <el-link class="link" type="primary" @click="toUpload">
-                                    {{ $t('license.levelUpPro') }}
-                                </el-link>
-                            </span>
-                        </el-form-item>
+                        <el-form-item v-if="dialogData.rowData!.hasAlert"></el-form-item>
                         <el-form-item
                             :label="$t('xpack.alert.alertMethod')"
                             v-if="dialogData.rowData!.hasAlert"
@@ -154,32 +136,19 @@
                                 cleanable
                             >
                                 <el-option value="mail" :label="$t('xpack.alert.mail')" />
-                                <el-option v-if="!isProductPro" value="bark" :label="$t('xpack.alert.bark')" />
-                                <el-option
-                                    value="weCom"
-                                    v-if="!globalStore.isIntl"
-                                    :disabled="!dialogData.rowData!.hasAlert || !isProductPro"
-                                    :label="$t('xpack.alert.weCom')"
-                                />
+                                <el-option value="bark" :label="$t('xpack.alert.bark')" />
+                                <el-option value="weCom" v-if="!globalStore.isIntl" :label="$t('xpack.alert.weCom')" />
                                 <el-option
                                     value="dingTalk"
                                     v-if="!globalStore.isIntl"
-                                    :disabled="!dialogData.rowData!.hasAlert || !isProductPro"
                                     :label="$t('xpack.alert.dingTalk')"
                                 />
                                 <el-option
                                     value="feiShu"
                                     v-if="!globalStore.isIntl"
-                                    :disabled="!dialogData.rowData!.hasAlert || !isProductPro"
                                     :label="$t('xpack.alert.feiShu')"
                                 />
-                                <el-option v-if="isProductPro" value="bark" :label="$t('xpack.alert.bark')" />
-                                <el-option
-                                    value="sms"
-                                    v-if="!globalStore.isIntl"
-                                    :disabled="!dialogData.rowData!.hasAlert || !isProductPro"
-                                    :label="$t('xpack.alert.sms')"
-                                />
+                                <el-option value="sms" v-if="!globalStore.isIntl" :label="$t('xpack.alert.sms')" />
                             </el-select>
                         </el-form-item>
                         <el-form-item
@@ -222,7 +191,6 @@
                 </el-button>
             </span>
         </template>
-        <LicenseImport ref="licenseRef" />
     </DrawerPro>
     <FileList ref="scanDirRef" @choose="loadDir" />
     <FileList ref="infectedDirRef" @choose="loadInfectedDir" />
@@ -234,20 +202,15 @@ import { Rules } from '@/global/form-rules';
 import FileList from '@/components/file-list/index.vue';
 import i18n from '@/lang';
 import { ElForm } from 'element-plus';
-import LicenseImport from '@/components/license-import/index.vue';
 import { MsgError, MsgSuccess } from '@/utils/message';
 import { Toolbox } from '@/api/interface/toolbox';
 import { createClam, updateClam } from '@/api/modules/toolbox';
-import { storeToRefs } from 'pinia';
 import { GlobalStore } from '@/store';
 import { specOptions, transObjToSpec, transSpecToObj, weekOptions } from '@/views/cronjob/cronjob/helper';
 import { splitTimeFromSecond, transferTimeToSecond } from '@/utils/util';
 
 const globalStore = GlobalStore();
-const licenseRef = ref();
 const scanDirRef = ref();
-const infectedDirRef = ref();
-const { isProductPro } = storeToRefs(globalStore);
 interface DialogProps {
     title: string;
     rowData?: Toolbox.ClamInfo;
@@ -421,10 +384,6 @@ const hasDay = (item: any) => {
 };
 const hasHour = (item: any) => {
     return item.specType !== 'perHour' && item.specType !== 'perNMinute' && item.specType !== 'perNSecond';
-};
-
-const toUpload = () => {
-    licenseRef.value.acceptParams();
 };
 
 const changeSpecType = () => {

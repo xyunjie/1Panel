@@ -4,39 +4,16 @@ import (
 	"github.com/1Panel-dev/1Panel/agent/app/dto"
 	"github.com/1Panel-dev/1Panel/agent/app/dto/request"
 	"github.com/1Panel-dev/1Panel/agent/app/service"
-	"github.com/1Panel-dev/1Panel/agent/constant"
 	"github.com/1Panel-dev/1Panel/agent/global"
 	"github.com/1Panel-dev/1Panel/agent/utils/common"
 )
 
 func Init() {
-	go syncApp()
-	go syncInstalledApp()
 	go syncRuntime()
 	go syncSSL()
 	go syncTask()
 	go initAcmeAccount()
 	go checkDockerCompose()
-}
-
-func syncApp() {
-	if global.CONF.Base.IsOffLine {
-		return
-	}
-	setting, err := service.NewISettingService().GetSettingInfo()
-	if err == nil && setting.AppStoreSyncStatus == constant.StatusSyncing {
-		_ = service.NewISettingService().Update("AppStoreSyncStatus", constant.StatusSyncSuccess)
-	}
-	if err := service.NewIAppService().SyncAppListFromRemote(""); err != nil {
-		global.LOG.Errorf("App Store synchronization failed")
-		return
-	}
-}
-
-func syncInstalledApp() {
-	if err := service.NewIAppInstalledService().SyncAll(true); err != nil {
-		global.LOG.Errorf("sync installed app error: %s", err.Error())
-	}
 }
 
 func syncRuntime() {

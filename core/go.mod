@@ -14,8 +14,6 @@ require (
 	github.com/go-resty/resty/v2 v2.15.3
 	github.com/go-webauthn/webauthn v0.15.0
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/securecookie v1.1.2
-	github.com/gorilla/sessions v1.4.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/jinzhu/copier v0.4.0
 	github.com/nicksnyder/go-i18n/v2 v2.4.0
@@ -31,7 +29,6 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/swaggo/files/v2 v2.0.2
 	github.com/swaggo/swag v1.16.3
-	github.com/wader/gormstore/v2 v2.0.3
 	github.com/xlzd/gotp v0.1.0
 	golang.org/x/crypto v0.45.0
 	golang.org/x/net v0.47.0
@@ -105,7 +102,6 @@ require (
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gorm.io/driver/sqlite v1.4.4 // indirect
 	modernc.org/libc v1.66.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect

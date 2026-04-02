@@ -211,6 +211,9 @@ export const listReleases = () => {
 export const upgrade = (version: string) => {
     return http.post(`/core/settings/upgrade`, { version: version });
 };
+export const upgradeByFile = (filePath: string, version: string, checksum?: string) => {
+    return http.post(`/core/settings/upgrade/file`, { filePath, version, checksum: checksum || '' });
+};
 
 // api config
 export const generateApiKey = () => {

@@ -9,7 +9,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/1Panel-dev/1Panel/agent/app/dto"
 	"github.com/1Panel-dev/1Panel/agent/app/model"
@@ -20,7 +19,6 @@ import (
 	"github.com/1Panel-dev/1Panel/agent/global"
 	"github.com/1Panel-dev/1Panel/agent/i18n"
 	"github.com/1Panel-dev/1Panel/agent/utils/cloud_storage"
-	"github.com/1Panel-dev/1Panel/agent/utils/cloud_storage/client"
 	"github.com/1Panel-dev/1Panel/agent/utils/encrypt"
 	"github.com/1Panel-dev/1Panel/agent/utils/files"
 	"github.com/jinzhu/copier"
@@ -114,16 +112,6 @@ func (u *BackupService) SearchWithPage(req dto.SearchPageWithType) (int64, inter
 			item.Credential, _ = encrypt.StringDecryptWithBase64(item.Credential)
 		}
 
-		if account.Type == constant.OneDrive || account.Type == constant.ALIYUN || account.Type == constant.GoogleDrive {
-			varMap := make(map[string]interface{})
-			if err := json.Unmarshal([]byte(item.Vars), &varMap); err != nil {
-				continue
-			}
-			delete(varMap, "refresh_token")
-			delete(varMap, "drive_id")
-			itemVars, _ := json.Marshal(varMap)
-			item.Vars = string(itemVars)
-		}
 		data = append(data, item)
 	}
 	return count, data, nil
@@ -149,14 +137,6 @@ func (u *BackupService) CheckConn(req dto.BackupOperate) dto.BackupCheckRes {
 	}
 	backup.Credential = string(itemCredential)
 
-	if req.Type == constant.OneDrive || req.Type == constant.GoogleDrive {
-		refreshToken, err := loadRefreshTokenByCode(&backup)
-		if err != nil {
-			res.Msg = err.Error()
-			return res
-		}
-		res.Token = base64.StdEncoding.EncodeToString([]byte(refreshToken))
-	}
 	isOk, err := u.checkBackupConn(&backup)
 	if err != nil {
 		res.Msg = err.Error()
@@ -221,10 +201,10 @@ func (u *BackupService) GetBuckets(req dto.ForBuckets) ([]interface{}, error) {
 		return nil, err
 	}
 	switch req.Type {
-	case constant.Sftp, constant.WebDAV:
+	case constant.Sftp:
 		varMap["username"] = req.AccessKey
 		varMap["password"] = req.Credential
-	case constant.OSS, constant.S3, constant.MinIo, constant.Cos, constant.Kodo:
+	case constant.S3, constant.MinIo:
 		varMap["accessKey"] = req.AccessKey
 		varMap["secretKey"] = req.Credential
 	}
@@ -299,36 +279,7 @@ func (u *BackupService) Update(req dto.BackupOperate) error {
 }
 
 func (u *BackupService) RefreshToken(req dto.OperateByID) error {
-	backup, _ := backupRepo.Get(repo.WithByID(req.ID))
-	if backup.ID == 0 {
-		return buserr.New("ErrRecordNotFound")
-	}
-	varMap := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(backup.Vars), &varMap); err != nil {
-		return fmt.Errorf("failed to refresh %s - %s token, please retry, err: %v", backup.Type, backup.Name, err)
-	}
-	var (
-		refreshToken string
-		err          error
-	)
-	switch backup.Type {
-	case constant.OneDrive:
-		refreshToken, err = client.RefreshToken("refresh_token", "refreshToken", varMap)
-	case constant.ALIYUN:
-		refreshToken, err = client.RefreshALIToken(varMap)
-	}
-	if err != nil {
-		varMap["refresh_status"] = constant.StatusFailed
-		varMap["refresh_msg"] = err.Error()
-		return fmt.Errorf("failed to refresh %s-%s token, please retry, err: %v", backup.Type, backup.Name, err)
-	}
-	varMap["refresh_status"] = constant.StatusSuccess
-	varMap["refresh_time"] = time.Now().Format(constant.DateTimeLayout)
-	varMap["refresh_token"] = refreshToken
-
-	varsItem, _ := json.Marshal(varMap)
-	backup.Vars = string(varsItem)
-	return backupRepo.Save(&backup)
+	return nil
 }
 
 func (u *BackupService) UploadForRecover(req dto.UploadForRecover) error {
@@ -517,15 +468,12 @@ func newClient(account *model.BackupAccount, isEncrypt bool) (cloud_storage.Clou
 		account.Credential, _ = encrypt.StringDecrypt(account.Credential)
 	}
 	switch account.Type {
-	case constant.Sftp, constant.WebDAV:
+	case constant.Sftp:
 		varMap["username"] = account.AccessKey
 		varMap["password"] = account.Credential
-	case constant.OSS, constant.S3, constant.MinIo, constant.Cos, constant.Kodo:
+	case constant.S3, constant.MinIo:
 		varMap["accessKey"] = account.AccessKey
 		varMap["secretKey"] = account.Credential
-	case constant.UPYUN:
-		varMap["operator"] = account.AccessKey
-		varMap["password"] = account.Credential
 	}
 
 	client, err := cloud_storage.NewCloudStorageClient(account.Type, varMap)
@@ -533,36 +481,6 @@ func newClient(account *model.BackupAccount, isEncrypt bool) (cloud_storage.Clou
 		return nil, err
 	}
 	return client, nil
-}
-
-func loadRefreshTokenByCode(backup *model.BackupAccount) (string, error) {
-	varMap := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(backup.Vars), &varMap); err != nil {
-		return "", fmt.Errorf("unmarshal backup vars failed, err: %v", err)
-	}
-	if token, ok := varMap["refresh_token"]; ok && len(token.(string)) != 0 {
-		return "", nil
-	}
-	refreshToken := ""
-	var err error
-	switch backup.Type {
-	case constant.GoogleDrive:
-		refreshToken, err = client.RefreshGoogleToken("authorization_code", "refreshToken", varMap)
-		if err != nil {
-			return "", err
-		}
-	case constant.OneDrive:
-		refreshToken, err = client.RefreshToken("authorization_code", "refreshToken", varMap)
-		if err != nil {
-			return "", err
-		}
-	}
-	if backup.Type != constant.ALIYUN {
-		varMap["refresh_token"] = refreshToken
-	}
-	itemVars, _ := json.Marshal(varMap)
-	backup.Vars = string(itemVars)
-	return refreshToken, nil
 }
 
 func loadBackupNamesByID(accountIDs string, downloadID uint) ([]string, string, error) {

@@ -2,11 +2,9 @@ package service
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/1Panel-dev/1Panel/core/app/dto"
 	"github.com/1Panel-dev/1Panel/core/app/model"
@@ -14,7 +12,6 @@ import (
 	"github.com/1Panel-dev/1Panel/core/buserr"
 	"github.com/1Panel-dev/1Panel/core/constant"
 	"github.com/1Panel-dev/1Panel/core/global"
-	"github.com/1Panel-dev/1Panel/core/utils/cloud_storage"
 	"github.com/1Panel-dev/1Panel/core/utils/encrypt"
 	"github.com/1Panel-dev/1Panel/core/utils/req_helper/proxy_local"
 	"github.com/1Panel-dev/1Panel/core/utils/xpack"
@@ -36,30 +33,7 @@ func NewIBackupService() IBackupService {
 }
 
 func (u *BackupService) LoadBackupClientInfo(clientType string) (dto.BackupClientInfo, error) {
-	var data dto.BackupClientInfo
-	clientIDKey := "OneDriveID"
-	clientIDSc := "OneDriveSc"
-	data.RedirectUri = constant.OneDriveRedirectURI
-	clientID, err := settingRepo.Get(repo.WithByKey(clientIDKey))
-	if err != nil {
-		return data, err
-	}
-	idItem, err := base64.StdEncoding.DecodeString(clientID.Value)
-	if err != nil {
-		return data, err
-	}
-	data.ClientID = string(idItem)
-	clientSecret, err := settingRepo.Get(repo.WithByKey(clientIDSc))
-	if err != nil {
-		return data, err
-	}
-	secretItem, err := base64.StdEncoding.DecodeString(clientSecret.Value)
-	if err != nil {
-		return data, err
-	}
-	data.ClientSecret = string(secretItem)
-
-	return data, err
+	return dto.BackupClientInfo{}, nil
 }
 
 func (u *BackupService) Create(req dto.BackupOperate) error {
@@ -183,43 +157,5 @@ func (u *BackupService) Update(req dto.BackupOperate) error {
 }
 
 func (u *BackupService) RefreshToken(req dto.OperateByName) error {
-	backup, _ := backupRepo.Get(repo.WithByName(req.Name))
-	if backup.ID == 0 {
-		return buserr.New("ErrRecordNotFound")
-	}
-	if !backup.IsPublic {
-		return buserr.New("ErrBackupPublic")
-	}
-	varMap := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(backup.Vars), &varMap); err != nil {
-		return fmt.Errorf("failed to refresh %s - %s token, please retry, err: %v", backup.Type, backup.Name, err)
-	}
-	var (
-		refreshToken string
-		err          error
-	)
-	switch backup.Type {
-	case constant.OneDrive:
-		refreshToken, err = cloud_storage.RefreshToken("refresh_token", "refreshToken", varMap)
-	case constant.ALIYUN:
-		refreshToken, err = cloud_storage.RefreshALIToken(varMap)
-	}
-	if err != nil {
-		varMap["refresh_status"] = constant.StatusFailed
-		varMap["refresh_msg"] = err.Error()
-		return fmt.Errorf("failed to refresh %s-%s token, please retry, err: %v", backup.Type, backup.Name, err)
-	}
-	varMap["refresh_status"] = constant.StatusSuccess
-	varMap["refresh_time"] = time.Now().Format(constant.DateTimeLayout)
-	varMap["refresh_token"] = refreshToken
-
-	varsItem, _ := json.Marshal(varMap)
-	backup.Vars = string(varsItem)
-	if err := backupRepo.Save(&backup); err != nil {
-		return err
-	}
-	if err := xpack.Sync(constant.SyncBackupAccounts); err != nil {
-		global.LOG.Errorf("sync backup account to node failed, err: %v", err)
-	}
 	return nil
 }

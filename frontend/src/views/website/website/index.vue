@@ -272,9 +272,7 @@
                     </span>
                     <span v-else>
                         {{ $t('app.checkInstalledWarn', ['OpenResty']) }}
-                        <el-button @click="goRouter('openresty')" link icon="Position" type="primary">
-                            {{ $t('database.goInstall') }}
-                        </el-button>
+                        {{ $t('website.installOpenRestyHelper') }}
                     </span>
                 </el-card>
             </template>
@@ -322,7 +320,7 @@ import { getAgentGroupList } from '@/api/modules/group';
 import { Group } from '@/api/interface/group';
 import { GlobalStore } from '@/store';
 import { getWebsiteTypes } from '@/global/mimetype';
-import { routerToFileWithPath, routerToNameWithParams, routerToNameWithQuery } from '@/utils/router';
+import { routerToFileWithPath, routerToNameWithParams } from '@/utils/router';
 const globalStore = GlobalStore();
 
 const shortcuts = [
@@ -392,10 +390,6 @@ let req = reactive({
 const mobile = computed(() => {
     return globalStore.isMobile();
 });
-
-const goRouter = async (key: string) => {
-    routerToNameWithQuery('AppAll', { install: key });
-};
 
 const showFavorite = (row: any) => {
     hoveredRowIndex.value = data.value.findIndex((item) => item === row);

@@ -2721,6 +2721,7 @@ const message = {
         browserCacheTimeHelper: '静态资源在浏览器本地缓存的时间，减少重复请求。到期前用户刷新页面会直接使用本地缓存。',
         donotLinkeDB: '不关联数据库',
         toWebsiteDir: '进入网站目录',
+        installOpenRestyHelper: '请通过 Docker 手动部署 OpenResty 容器后刷新页面。',
         execParameters: '执行参数',
         extCommand: '补充命令',
         mirror: '镜像源',

@@ -1,4 +1,4 @@
-import { getLicenseStatus, getMasterLicenseStatus, getSettingInfo } from '@/api/modules/setting';
+import { getSettingInfo } from '@/api/modules/setting';
 import { useTheme } from '@/global/use-theme';
 import { GlobalStore } from '@/store';
 const globalStore = GlobalStore();
@@ -25,10 +25,9 @@ async function getColoredFavicon(url: string, color: string) {
 export async function initFavicon() {
     document.title = globalStore.themeConfig.panelName;
     const favicon = globalStore.themeConfig.favicon;
-    const isPro = globalStore.isMasterProductPro;
     const themeColor = globalStore.themeConfig.primary;
     const customFaviconUrl = `/api/v2/images/favicon?t=${Date.now()}`;
-    const fallbackSvg = isPro ? await getColoredFavicon(faviconUrl, themeColor) : '/public/favicon.png';
+    const fallbackSvg = await getColoredFavicon(faviconUrl, themeColor);
     const setLink = (href: string) => {
         let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
         if (!link) {
@@ -73,25 +72,9 @@ const loadDataFromDB = async () => {
     globalStore.setOpenMenuTabs(res.data.menuTabs === 'Enable');
 };
 
-export async function loadProductProFromDB() {
-    const res = await getLicenseStatus();
-    if (!res || !res.data) {
-        globalStore.isProductPro = false;
-    } else {
-        globalStore.isProductPro = res.data.status === 'Bound';
-        if (globalStore.isProductPro) {
-            globalStore.productProExpires = Number(res.data.productPro);
-        }
-    }
-}
+export async function loadProductProFromDB() {}
 
 export async function loadMasterProductProFromDB() {
-    const res = await getMasterLicenseStatus();
-    if (!res || !res.data) {
-        globalStore.isMasterProductPro = false;
-    } else {
-        globalStore.isMasterProductPro = res.data.status === 'Bound';
-    }
     switchTheme();
     initFavicon();
     loadDataFromDB();

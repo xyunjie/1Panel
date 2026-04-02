@@ -1,118 +1,75 @@
 <template>
-    <DrawerPro v-model="drawerVisible" :header="$t('commons.button.upgrade')" @close="handleClose" size="large">
-        <div class="panel-MdEditor">
-            <div class="default-theme" style="margin-left: 20px">
-                <h2 class="inline-block">{{ $t('app.version') }}</h2>
-            </div>
-            <el-radio-group class="inline-block tag" v-model="upgradeVersion" @change="changeOption">
-                <el-radio v-if="upgradeInfo.newVersion" :value="upgradeInfo.newVersion">
-                    {{ upgradeInfo.newVersion }}
-                </el-radio>
-                <el-radio v-if="upgradeInfo.latestVersion" :value="upgradeInfo.latestVersion">
-                    {{ upgradeInfo.latestVersion }}
-                </el-radio>
-                <el-radio v-if="upgradeInfo.testVersion" :value="upgradeInfo.testVersion">
-                    {{ upgradeInfo.testVersion }}
-                </el-radio>
-            </el-radio-group>
-            <MarkDownEditor v-loading="loading" :content="upgradeInfo.releaseNote" />
-        </div>
+    <DrawerPro v-model="drawerVisible" :header="$t('commons.button.upgrade')" @close="handleClose" size="small">
+        <el-form ref="formRef" :model="form" label-width="120px" label-position="top">
+            <el-form-item :label="$t('setting.upgradeFilePath')" prop="filePath" :rules="[{ required: true }]">
+                <el-input v-model="form.filePath" :placeholder="$t('setting.upgradeFilePathHelper')" />
+            </el-form-item>
+            <el-form-item :label="$t('setting.upgradeVersion')" prop="version" :rules="[{ required: true }]">
+                <el-input v-model="form.version" placeholder="v2.x.x" />
+            </el-form-item>
+            <el-form-item :label="$t('setting.upgradeChecksum')" prop="checksum">
+                <el-input v-model="form.checksum" :placeholder="$t('setting.upgradeChecksumHelper')" />
+            </el-form-item>
+        </el-form>
         <template #footer>
             <span class="dialog-footer">
                 <el-button @click="drawerVisible = false">{{ $t('commons.button.cancel') }}</el-button>
-                <el-button type="primary" @click="onUpgrade">{{ $t('setting.upgradeNow') }}</el-button>
+                <el-button type="primary" :loading="loading" @click="onUpgrade">
+                    {{ $t('setting.upgradeNow') }}
+                </el-button>
             </span>
         </template>
     </DrawerPro>
 </template>
 
 <script setup lang="ts">
-import MarkDownEditor from '@/components/mkdown-editor/index.vue';
-
-import { loadReleaseNotes, upgrade } from '@/api/modules/setting';
+import { upgradeByFile } from '@/api/modules/setting';
 import i18n from '@/lang';
 import { MsgSuccess } from '@/utils/message';
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { GlobalStore } from '@/store';
 import { ElMessageBox } from 'element-plus';
 
 const globalStore = GlobalStore();
-
 const drawerVisible = ref(false);
-const upgradeInfo = ref();
-const loading = ref();
-const upgradeVersion = ref();
+const loading = ref(false);
+const formRef = ref();
 
-interface DialogProps {
-    upgradeInfo: number;
-    upgradeVersion: string;
-}
-const acceptParams = (params: DialogProps): void => {
-    upgradeInfo.value = params.upgradeInfo;
-    upgradeVersion.value = params.upgradeVersion;
-    drawerVisible.value = true;
-};
+const form = reactive({ filePath: '', version: '', checksum: '' });
 
 const emit = defineEmits(['search']);
+
+const acceptParams = (): void => {
+    form.filePath = '';
+    form.version = '';
+    form.checksum = '';
+    drawerVisible.value = true;
+};
 
 const handleClose = () => {
     drawerVisible.value = false;
 };
 
-const changeOption = async () => {
-    loading.value = true;
-    await loadReleaseNotes(upgradeVersion.value)
-        .then((res) => {
-            loading.value = false;
-            upgradeInfo.value.releaseNote = res.data;
-        })
-        .catch(() => {
-            loading.value = false;
-        });
-};
-
 const onUpgrade = async () => {
+    await formRef.value?.validate();
     ElMessageBox.confirm(i18n.global.t('setting.upgradeHelper', i18n.global.t('commons.button.upgrade')), {
         confirmButtonText: i18n.global.t('commons.button.confirm'),
         cancelButtonText: i18n.global.t('commons.button.cancel'),
         type: 'info',
     }).then(async () => {
-        await upgrade(upgradeVersion.value);
-        globalStore.isLoading = true;
-        globalStore.isOnRestart = true;
-        drawerVisible.value = false;
-        MsgSuccess(i18n.global.t('commons.msg.operationSuccess'));
-        emit('search');
+        loading.value = true;
+        try {
+            await upgradeByFile(form.filePath, form.version, form.checksum);
+            globalStore.isLoading = true;
+            globalStore.isOnRestart = true;
+            drawerVisible.value = false;
+            MsgSuccess(i18n.global.t('commons.msg.operationSuccess'));
+            emit('search');
+        } finally {
+            loading.value = false;
+        }
     });
 };
 
-defineExpose({
-    acceptParams,
-});
+defineExpose({ acceptParams });
 </script>
-
-<style lang="scss" scoped>
-.line-height {
-    line-height: 25px;
-}
-.panel-MdEditor {
-    height: calc(100vh - 330px);
-    .tag {
-        margin-top: -6px;
-        margin-left: 20px;
-        vertical-align: middle;
-    }
-    :deep(.md-editor-preview) {
-        font-size: 14px;
-    }
-    :deep(.default-theme h2) {
-        color: var(--el-color-primary);
-        margin: 13px 0;
-        padding: 0;
-        font-size: 16px;
-    }
-}
-:deep(.md-editor-dark) {
-    background-color: var(--panel-main-bg-color-9);
-}
-</style>

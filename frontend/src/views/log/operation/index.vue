@@ -69,7 +69,7 @@
                             <span v-if="globalStore.language === 'en'">{{ row.detailEN }}</span>
                         </template>
                     </el-table-column>
-                    <el-table-column v-if="globalStore.isMasterProductPro" :label="$t('xpack.node.node')" prop="node">
+                    <el-table-column :label="$t('xpack.node.node')" prop="node">
                         <template #default="{ row }">
                             <span>{{ row.node === 'local' ? globalStore.getMasterAlias() : row.node }}</span>
                         </template>
@@ -288,9 +288,7 @@ const onSubmitClean = async () => {
 };
 
 onMounted(() => {
-    if (globalStore.isMasterProductPro) {
-        loadNodes();
-    }
+    loadNodes();
     search();
 });
 </script>

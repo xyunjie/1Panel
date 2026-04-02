@@ -7,17 +7,7 @@
                     path: '/',
                 },
             ]"
-        >
-            <template #route-button>
-                <div class="router-button" v-if="!isOffLine">
-                    <template v-if="!isProductPro">
-                        <el-button link type="primary" @click="toUpload">
-                            {{ $t('license.levelUpPro') }}
-                        </el-button>
-                    </template>
-                </div>
-            </template>
-        </RouterButton>
+        />
 
         <el-alert
             v-if="!isSafety && globalStore.showEntranceWarn"
@@ -414,7 +404,6 @@
             </el-col>
         </el-row>
 
-        <LicenseImport ref="licenseRef" />
         <QuickJump @search="onLoadBaseInfo(false, 'all')" ref="quickJumpRef" />
 
         <DialogPro v-model="welcomeOpen" size="w-70" id="welcomeDialog">
@@ -428,7 +417,6 @@ import { onMounted, onBeforeUnmount, ref, reactive, computed, nextTick } from 'v
 import SystemStatus from '@/views/home/status/index.vue';
 import AppLauncher from '@/views/home/app/index.vue';
 import VCharts from '@/components/v-charts/index.vue';
-import LicenseImport from '@/components/license-import/index.vue';
 import QuickJump from '@/views/home/quick/index.vue';
 import CardWithHeader from '@/components/card-with-header/index.vue';
 import MarkDownEditor from '@/components/mkdown-editor/index.vue';
@@ -448,7 +436,6 @@ import {
     updateSetting,
 } from '@/api/modules/setting';
 import { GlobalStore } from '@/store';
-import { storeToRefs } from 'pinia';
 import { routerToFileWithPath, routerToNameWithQuery, routerToPath } from '@/utils/router';
 import { getWelcomePage } from '@/api/modules/auth';
 import {
@@ -498,9 +485,7 @@ const netOptionsFromCache = ref(false);
 const ioOptionsFromCache = ref(false);
 const hasRefreshedOptionsOnHover = ref(false);
 
-const licenseRef = ref();
 const quickJumpRef = ref();
-const { isProductPro, isOffLine } = storeToRefs(globalStore);
 
 const searchInfo = reactive({
     ioOption: 'all',
@@ -716,11 +701,7 @@ const quickJump = (item: any) => {
 };
 
 const showSimpleNode = () => {
-    return (
-        simpleNodeCarouselSetting.value === 'Enable' &&
-        globalStore.isMasterProductPro &&
-        simpleNodes.value?.length !== 0
-    );
+    return simpleNodeCarouselSetting.value === 'Enable' && simpleNodes.value?.length !== 0;
 };
 
 const toggleSensitiveInfo = () => {
@@ -987,10 +968,6 @@ const onFocus = () => {
 };
 const onBlur = () => {
     isActive.value = false;
-};
-
-const toUpload = () => {
-    licenseRef.value.acceptParams();
 };
 
 const refreshOptionsOnHover = async () => {

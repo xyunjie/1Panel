@@ -71,13 +71,7 @@
                             </el-button>
                         </template>
                     </el-table-column>
-                    <el-table-column
-                        v-if="isProductPro"
-                        :label="$t('commons.table.status')"
-                        :min-width="70"
-                        prop="status"
-                        sortable
-                    >
+                    <el-table-column :label="$t('commons.table.status')" :min-width="70" prop="status" sortable>
                         <template #default="{ row }">
                             <Status
                                 v-if="row.status === 'Enable'"
@@ -92,12 +86,7 @@
                             <span v-if="row.status === ''">-</span>
                         </template>
                     </el-table-column>
-                    <el-table-column
-                        v-if="isProductPro"
-                        :label="$t('cronjob.cronSpec')"
-                        show-overflow-tooltip
-                        :min-width="120"
-                    >
+                    <el-table-column :label="$t('cronjob.cronSpec')" show-overflow-tooltip :min-width="120">
                         <template #default="{ row }">
                             <span>
                                 {{ row.spec !== '' ? transSpecToStr(row.spec) : '-' }}
@@ -183,14 +172,12 @@ import SettingDialog from '@/views/toolbox/clam/setting/index.vue';
 import { Toolbox } from '@/api/interface/toolbox';
 import { transSpecToStr } from '@/views/cronjob/cronjob/helper';
 import { GlobalStore } from '@/store';
-import { storeToRefs } from 'pinia';
 import { routerToFileWithPath, routerToName } from '@/utils/router';
 
 const loading = ref();
 const selects = ref<any>([]);
 
 const globalStore = GlobalStore();
-const { isProductPro } = storeToRefs(globalStore);
 const data = ref();
 const paginationConfig = reactive({
     cacheSizeKey: 'clam-page-size',

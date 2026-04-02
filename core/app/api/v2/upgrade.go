@@ -79,3 +79,25 @@ func (b *BaseApi) Upgrade(c *gin.Context) {
 	}
 	helper.Success(c)
 }
+
+// @Tags System Setting
+// @Summary Upgrade by local file
+// @Accept json
+// @Param request body dto.UpgradeByFile true "request"
+// @Success 200
+// @Security ApiKeyAuth
+// @Security Timestamp
+// @Router /core/settings/upgrade/file [post]
+// @x-panel-log {"bodyKeys":["version"],"paramKeys":[],"BeforeFunctions":[],"formatZH":"本地文件升级系统 => [version]","formatEN":"upgrade system by file => [version]"}
+func (b *BaseApi) UpgradeByFile(c *gin.Context) {
+	var req dto.UpgradeByFile
+	if err := helper.CheckBindAndValidate(&req, c); err != nil {
+		return
+	}
+
+	if err := upgradeService.UpgradeByFile(req); err != nil {
+		helper.InternalServer(c, err)
+		return
+	}
+	helper.Success(c)
+}

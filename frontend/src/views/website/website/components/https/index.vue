@@ -37,7 +37,7 @@
         </el-form-item>
 
         <div v-if="formData.type === 'existed'">
-            <el-form-item :label="$t('website.acmeAccountManage')" prop="acmeAccountID">
+            <el-form-item v-if="!isOffLine" :label="$t('website.acmeAccountManage')" prop="acmeAccountID">
                 <el-select
                     v-model="formData.acmeAccountID"
                     :placeholder="$t('website.selectAcme')"
@@ -151,6 +151,8 @@ import { getAccountName, dateFormatSimple } from '@/utils/util';
 import WebsiteSSL from '@/views/website/website/components/website-ssl/index.vue';
 import { Website } from '@/api/interface/website';
 import { listSSL, searchAcmeAccount } from '@/api/modules/website';
+import { useGlobalStore } from '@/composables/useGlobalStore';
+const { isOffLine } = useGlobalStore();
 
 type SSLItem = Website.SSL & { organization?: string };
 
