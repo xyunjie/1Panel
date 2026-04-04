@@ -1,0 +1,27 @@
+version: '3'
+services:
+  openresty:
+    image: 1panel/openresty:1.27.1.2-3-3-focal
+    container_name: ${CONTAINER_NAME}
+    restart: always
+    ports:
+      - "${PANEL_APP_PORT_HTTP}:80"
+      - "${PANEL_APP_PORT_HTTPS}:443"
+      - "${PANEL_APP_PORT_HTTPS}:443/udp"
+    volumes:
+      - ./conf/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - ./conf/default:/usr/local/openresty/nginx/conf/default
+      - ./conf/ssl:/usr/local/openresty/nginx/conf/ssl
+      - ${WEBSITE_DIR}/conf.d:/www/conf.d
+      - ${WEBSITE_DIR}/stream.d:/www/stream.d
+      - ${WEBSITE_DIR}/sites:/www/sites
+      - ${WEBSITE_DIR}/1pwaf:/www/1pwaf
+      - ./log:/usr/local/openresty/nginx/log
+      - ./1pwaf:/usr/local/openresty/1pwaf
+      - ./build:/usr/local/openresty/build
+    networks:
+      - 1panel-network
+
+networks:
+  1panel-network:
+    external: true

@@ -4,7 +4,7 @@ import { GlobalStore } from '@/store';
 const globalStore = GlobalStore();
 
 export const changeToLocal = async () => {
-    if (!globalStore.isMasterPro) {
+    if (!globalStore.isMaster) {
         setDefaultNodeInfo();
         return;
     }

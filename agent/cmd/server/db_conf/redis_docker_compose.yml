@@ -1,0 +1,17 @@
+version: '3'
+services:
+  redis:
+    image: redis:7
+    container_name: ${CONTAINER_NAME}
+    restart: always
+    ports:
+      - "${PANEL_APP_PORT_HTTP}:6379"
+    command: redis-server --requirepass ${PANEL_REDIS_ROOT_PASSWORD} --appendonly yes
+    volumes:
+      - ./data:/data
+    networks:
+      - 1panel-network
+
+networks:
+  1panel-network:
+    external: true

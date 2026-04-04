@@ -1,0 +1,18 @@
+version: '3'
+services:
+  postgresql:
+    image: postgres:16
+    container_name: ${CONTAINER_NAME}
+    restart: always
+    ports:
+      - "${PANEL_APP_PORT_HTTP}:5432"
+    environment:
+      POSTGRES_PASSWORD: ${PANEL_DB_ROOT_PASSWORD}
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    networks:
+      - 1panel-network
+
+networks:
+  1panel-network:
+    external: true

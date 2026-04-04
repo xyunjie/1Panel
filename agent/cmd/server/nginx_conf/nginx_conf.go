@@ -5,6 +5,15 @@ import (
 	"io"
 )
 
+//go:embed openresty_docker_compose.yml
+var OpenrestyDockerCompose []byte
+
+//go:embed openresty_env
+var OpenrestyEnv []byte
+
+//go:embed openresty_nginx.conf
+var OpenrestyNginxConf []byte
+
 //go:embed ssl.conf
 var SSL []byte
 

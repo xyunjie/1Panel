@@ -16,6 +16,8 @@ var (
 	appService              = service.NewIAppService()
 	appInstallService       = service.NewIAppInstalledService()
 	appIgnoreUpgradeService = service.NewIAppIgnoreUpgradeService()
+	openrestyService        = service.NewIOpenrestyService()
+	databaseInstallService  = service.NewIDatabaseInstallService()
 
 	aiToolService      = service.NewIAIToolService()
 	mcpServerService   = service.NewIMcpServerService()

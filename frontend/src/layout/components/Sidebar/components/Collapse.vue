@@ -111,10 +111,10 @@ const props = defineProps({
     version: String,
 });
 const isMasterPro = computed(() => {
-    return globalStore.isMasterPro();
+    return globalStore.isMaster;
 });
 watch(
-    () => globalStore.isMasterPro(),
+    () => globalStore.isMaster,
     () => {
         loadNodes();
     },

@@ -2943,6 +2943,8 @@ const message = {
         donotLinkeDB: 'Do Not Link Database',
         toWebsiteDir: 'Enter Website Directory',
         installOpenRestyHelper: 'Please deploy an OpenResty container manually via Docker, then refresh the page.',
+        linkContainer: 'Link Existing Container',
+        imageTar: 'Image Package',
         execParameters: 'Execution Parameters',
         extCommand: 'Supplementary Command',
         mirror: 'Mirror Source',

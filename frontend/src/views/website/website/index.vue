@@ -270,10 +270,93 @@
                             {{ $t('website.toWebsiteDir') }}
                         </el-button>
                     </span>
-                    <span v-else>
-                        {{ $t('app.checkInstalledWarn', ['OpenResty']) }}
-                        {{ $t('website.installOpenRestyHelper') }}
-                    </span>
+                    <div v-else>
+                        <p>{{ $t('app.checkInstalledWarn', ['OpenResty']) }}</p>
+                        <el-tabs v-model="installTab" class="mt-2">
+                            <el-tab-pane :label="$t('website.linkContainer')" name="link">
+                                <el-form label-width="120px" size="small" class="mt-1">
+                                    <el-form-item :label="$t('app.containerName')">
+                                        <el-select
+                                            v-model="linkForm.containerName"
+                                            filterable
+                                            @focus="loadContainers"
+                                            :loading="loadingContainers"
+                                            style="width: 300px"
+                                        >
+                                            <el-option
+                                                v-for="c in containerList"
+                                                :key="c.name"
+                                                :label="c.name + ' [' + c.image + ']'"
+                                                :value="c.name"
+                                                :disabled="!c.isValid"
+                                            >
+                                                <div class="flex justify-between items-center w-full">
+                                                    <span>{{ c.name }}</span>
+                                                    <el-tag v-if="c.isValid" size="small" type="success">
+                                                        OpenResty
+                                                    </el-tag>
+                                                    <el-tag v-else size="small" type="info">
+                                                        {{ c.image }}
+                                                    </el-tag>
+                                                </div>
+                                            </el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                    <el-form-item label="HTTP">
+                                        <el-input-number v-model="linkForm.httpPort" :min="1" :max="65535" />
+                                    </el-form-item>
+                                    <el-form-item label="HTTPS">
+                                        <el-input-number v-model="linkForm.httpsPort" :min="1" :max="65535" />
+                                    </el-form-item>
+                                    <el-form-item>
+                                        <el-button
+                                            type="primary"
+                                            @click="linkOpenresty"
+                                            :loading="linking"
+                                            :disabled="!linkForm.containerName"
+                                        >
+                                            {{ $t('website.linkContainer') }}
+                                        </el-button>
+                                    </el-form-item>
+                                </el-form>
+                            </el-tab-pane>
+                            <el-tab-pane :label="$t('commons.button.install')" name="install">
+                                <el-form label-width="120px" size="small" class="mt-1">
+                                    <el-form-item :label="$t('website.imageTar')">
+                                        <el-upload
+                                            action=""
+                                            :auto-upload="false"
+                                            :show-file-list="true"
+                                            :limit="1"
+                                            accept=".tar,.tar.gz,.tgz"
+                                            :on-change="handleImageFileChange"
+                                            :on-remove="handleImageFileRemove"
+                                        >
+                                            <el-button type="primary" plain>
+                                                {{ $t('commons.button.upload') }}
+                                            </el-button>
+                                        </el-upload>
+                                    </el-form-item>
+                                    <el-form-item label="HTTP">
+                                        <el-input-number v-model="installForm.httpPort" :min="1" :max="65535" />
+                                    </el-form-item>
+                                    <el-form-item label="HTTPS">
+                                        <el-input-number v-model="installForm.httpsPort" :min="1" :max="65535" />
+                                    </el-form-item>
+                                    <el-form-item>
+                                        <el-button
+                                            type="primary"
+                                            @click="installOpenresty"
+                                            :loading="installing"
+                                            :disabled="!imageFile"
+                                        >
+                                            {{ $t('commons.button.install') }} OpenResty
+                                        </el-button>
+                                    </el-form-item>
+                                </el-form>
+                            </el-tab-pane>
+                        </el-tabs>
+                    </div>
                 </el-card>
             </template>
         </LayoutContent>
@@ -307,6 +390,7 @@ import Domain from '@/views/website/website/domain/index.vue';
 import BatchSetGroup from '@/views/website/website/batch-op/group.vue';
 import BatchSetHttps from '@/views/website/website/batch-op/https.vue';
 
+import http from '@/api';
 import i18n from '@/lang';
 import { onMounted, reactive, ref, computed } from 'vue';
 import { batchOperate, opWebsite, searchWebsites, updateWebsite } from '@/api/modules/website';
@@ -457,6 +541,72 @@ const listGroup = async () => {
 
 const setting = () => {
     openNginxConfig.value = true;
+};
+
+const installTab = ref('link');
+const installForm = reactive({ httpPort: 80, httpsPort: 443 });
+const installing = ref(false);
+const imageFile = ref<File | null>(null);
+
+const handleImageFileChange = (file: any) => {
+    imageFile.value = file.raw;
+};
+const handleImageFileRemove = () => {
+    imageFile.value = null;
+};
+
+const installOpenresty = async () => {
+    if (!imageFile.value) return;
+    installing.value = true;
+    try {
+        const formData = new FormData();
+        formData.append('file', imageFile.value);
+        const uploadRes = await http.upload('apps/installed/openresty/upload', formData);
+        const imagePath = uploadRes.data;
+
+        await http.post('apps/installed/openresty/install', {
+            httpPort: installForm.httpPort,
+            httpsPort: installForm.httpsPort,
+            imagePath: imagePath,
+        });
+        MsgSuccess(i18n.global.t('commons.msg.operationSuccess'));
+        setTimeout(() => {
+            appStatusRef.value?.onCheck('openresty', '');
+        }, 3000);
+    } catch (e) {
+    } finally {
+        installing.value = false;
+    }
+};
+
+const linkForm = reactive({ containerName: '', httpPort: 80, httpsPort: 443 });
+const linking = ref(false);
+const loadingContainers = ref(false);
+const containerList = ref<any[]>([]);
+const loadContainers = async () => {
+    loadingContainers.value = true;
+    try {
+        const res = await http.get<any[]>('apps/installed/openresty/containers');
+        containerList.value = res.data || [];
+    } catch (e) {
+    } finally {
+        loadingContainers.value = false;
+    }
+};
+const linkOpenresty = async () => {
+    linking.value = true;
+    try {
+        await http.post('apps/installed/openresty/link', {
+            containerName: linkForm.containerName,
+            httpPort: linkForm.httpPort,
+            httpsPort: linkForm.httpsPort,
+        });
+        MsgSuccess(i18n.global.t('commons.msg.operationSuccess'));
+        appStatusRef.value?.onCheck('openresty', '');
+    } catch (e) {
+    } finally {
+        linking.value = false;
+    }
 };
 
 const openConfig = (id: number) => {
