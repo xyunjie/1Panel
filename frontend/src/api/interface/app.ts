@@ -137,6 +137,47 @@ export namespace App {
         name: string;
     }
 
+    export interface DatabaseOfflineInstall {
+        appKey: string;
+        port: number;
+        password: string;
+        imagePath: string;
+        taskID: string;
+        containerName?: string;
+        installDir?: string;
+    }
+
+    export interface OpenrestyOfflineInstall {
+        httpPort: number;
+        httpsPort: number;
+        imagePath: string;
+        taskID: string;
+        containerName?: string;
+        websiteDir?: string;
+        packageUrl?: string;
+    }
+
+    export interface OfflineInstallPreflight {
+        ready: boolean;
+        appKey: string;
+        requiredImage: string;
+        dockerReady: boolean;
+        dockerMessage: string;
+        imageReady: boolean;
+        imageMessage: string;
+        installDir: string;
+        installDirReady: boolean;
+        installDirMessage: string;
+        websiteDir: string;
+        websiteDirReady: boolean;
+        websiteDirMessage: string;
+        diskReady: boolean;
+        diskMessage: string;
+        diskUsedPercent: number;
+        diskAvailable: number;
+        diskWarning: number;
+    }
+
     export interface AppInstallSearch extends ReqPage {
         name?: string;
         tags?: string[];

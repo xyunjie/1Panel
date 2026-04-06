@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/1Panel-dev/1Panel/agent/app/dto"
 	"github.com/1Panel-dev/1Panel/agent/app/dto/request"
 	"github.com/1Panel-dev/1Panel/agent/app/dto/response"
 	"github.com/1Panel-dev/1Panel/agent/app/model"
@@ -24,11 +25,13 @@ import (
 )
 
 type DatabaseInstallReq struct {
-	AppKey    string `json:"appKey" validate:"required,oneof=mysql postgresql redis"`
-	Port      int    `json:"port" validate:"required"`
-	Password  string `json:"password" validate:"required"`
-	ImagePath string `json:"imagePath" validate:"required"`
-	TaskID    string `json:"taskID"`
+	AppKey        string `json:"appKey" validate:"required,oneof=mysql postgresql redis"`
+	Port          int    `json:"port" validate:"required"`
+	Password      string `json:"password" validate:"required"`
+	ImagePath     string `json:"imagePath" validate:"required"`
+	TaskID        string `json:"taskID"`
+	ContainerName string `json:"containerName"`
+	InstallDir    string `json:"installDir"`
 }
 
 type DatabaseLinkReq struct {
@@ -127,7 +130,10 @@ func (d *DatabaseInstallService) Install(req DatabaseInstallReq) error {
 		return err
 	}
 
-	containerName := meta.ContainerPfx
+	containerName := req.ContainerName
+	if containerName == "" {
+		containerName = meta.ContainerPfx
+	}
 	if exist, _ := appInstallRepo.GetFirst(appInstallRepo.WithContainerName(containerName)); exist.ID > 0 {
 		return buserr.New("ErrContainerName")
 	}
@@ -160,7 +166,10 @@ func (d *DatabaseInstallService) Install(req DatabaseInstallReq) error {
 		App:           *app,
 	}
 
-	installDir := path.Join(global.Dir.AppInstallDir, req.AppKey, req.AppKey)
+	installDir := req.InstallDir
+	if installDir == "" {
+		installDir = path.Join(global.Dir.AppInstallDir, req.AppKey, req.AppKey)
+	}
 	fileOp := files.NewFileOp()
 	if fileOp.Stat(installDir) {
 		_ = fileOp.DeleteDir(installDir)
@@ -375,6 +384,51 @@ func (d *DatabaseInstallService) LinkContainer(req DatabaseLinkReq) error {
 	return nil
 }
 
+func offlineDBParams(appKey string, defaultPort int) string {
+	passwordKey := "PANEL_DB_ROOT_PASSWORD"
+	passwordLabelZh := "Root 密码"
+	passwordLabelEn := "Root Password"
+	if appKey == constant.AppRedis {
+		passwordKey = "PANEL_REDIS_ROOT_PASSWORD"
+		passwordLabelZh = "访问密码"
+		passwordLabelEn = "Access Password"
+	}
+	params, _ := json.Marshal(dto.AppForm{
+		FormFields: []dto.AppFormFields{
+			{
+				Type:     "number",
+				LabelZh:  "端口",
+				LabelEn:  "Port",
+				Required: true,
+				Default:  defaultPort,
+				EnvKey:   "PANEL_APP_PORT_HTTP",
+			},
+			{
+				Type:     "password",
+				LabelZh:  passwordLabelZh,
+				LabelEn:  passwordLabelEn,
+				Required: true,
+				Default:  "",
+				EnvKey:   passwordKey,
+			},
+		},
+	})
+	return string(params)
+}
+
+func ensureOfflineDBCatalog() error {
+	for appKey, meta := range dbAppMeta {
+		app, err := ensureDBApp(appKey, meta)
+		if err != nil {
+			return err
+		}
+		if _, err := ensureDBAppDetail(app.ID, appKey, meta); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func ensureDBApp(appKey string, meta struct {
 	Name         string
 	ShortDescZh  string
@@ -420,12 +474,17 @@ func ensureDBAppDetail(appID uint, appKey string, meta struct {
 }) (*model.AppDetail, error) {
 	detail, err := appDetailRepo.GetFirst(appDetailRepo.WithAppId(appID))
 	if err == nil {
+		if detail.Params == "" {
+			detail.Params = offlineDBParams(appKey, meta.DefaultPort)
+			_ = appDetailRepo.Update(context.Background(), detail)
+		}
 		return &detail, nil
 	}
 
 	newDetail := model.AppDetail{
 		AppId:         appID,
 		Version:       meta.Version,
+		Params:        offlineDBParams(appKey, meta.DefaultPort),
 		DockerCompose: string(meta.Compose()),
 		Status:        constant.AppNormal,
 	}

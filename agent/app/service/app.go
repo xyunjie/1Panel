@@ -61,11 +61,31 @@ type appInstallHooks struct {
 	AfterCopyData func(appInstall *model.AppInstall) error
 }
 
+func ensureBuiltInOfflineCatalog() error {
+	if err := ensureOfflineDBCatalog(); err != nil {
+		return err
+	}
+	if err := ensureOpenrestyCatalog(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func NewIAppService() IAppService {
 	return &AppService{}
 }
 
 func (a AppService) PageApp(ctx *gin.Context, req request.AppSearch) (*response.AppRes, error) {
+	if req.Resource == constant.AppResourceLocal {
+		if err := ensureBuiltInOfflineCatalog(); err != nil {
+			return nil, err
+		}
+	}
+	if global.CONF.Base.IsOffLine && (req.Resource == "" || req.Resource == "all" || req.Resource == constant.AppResourceLocal) {
+		if err := ensureBuiltInOfflineCatalog(); err != nil {
+			return nil, err
+		}
+	}
 	var opts []repo.DBOption
 	opts = append(opts, appRepo.OrderByRecommend())
 	if req.Name != "" {
@@ -194,6 +214,11 @@ func (a AppService) GetAppTags(ctx *gin.Context) ([]response.TagDTO, error) {
 
 func (a AppService) GetApp(ctx *gin.Context, key string) (*response.AppDTO, error) {
 	var appDTO response.AppDTO
+	if global.CONF.Base.IsOffLine {
+		if err := ensureBuiltInOfflineCatalog(); err != nil {
+			return nil, err
+		}
+	}
 	if key == "postgres" {
 		key = "postgresql"
 	}
@@ -235,6 +260,11 @@ func (a AppService) GetAppDetail(appID uint, version, appType string) (response.
 		appDetailDTO response.AppDetailDTO
 		opts         []repo.DBOption
 	)
+	if global.CONF.Base.IsOffLine {
+		if err := ensureBuiltInOfflineCatalog(); err != nil {
+			return appDetailDTO, err
+		}
+	}
 	opts = append(opts, appDetailRepo.WithAppId(appID), appDetailRepo.WithVersion(version))
 	detail, err := appDetailRepo.GetFirst(opts...)
 	if err != nil {

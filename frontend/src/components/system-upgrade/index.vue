@@ -2,7 +2,7 @@
     <div>
         <div class="flex w-full flex-col gap-2 md:flex-row items-center">
             <div class="flex flex-wrap gap-y-2 items-center">
-                <span v-if="props.footer">
+                <span v-if="props.footer && !isOffLine">
                     <el-link type="primary" underline="never" @click="toDoc">
                         <span class="font-normal">{{ $t('setting.doc2') }}</span>
                     </el-link>
@@ -33,12 +33,13 @@
 <script setup lang="ts">
 import { getSettingInfo } from '@/api/modules/setting';
 import Upgrade from '@/components/system-upgrade/upgrade/index.vue';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { GlobalStore } from '@/store';
 import { storeToRefs } from 'pinia';
 
 const globalStore = GlobalStore();
 const { docsUrl } = storeToRefs(globalStore);
+const isOffLine = computed(() => globalStore.isOffLine);
 const upgradeRef = ref();
 
 const version = ref<string>('');
@@ -52,6 +53,7 @@ const search = async () => {
 };
 
 const toDoc = () => {
+    if (isOffLine.value) return;
     window.open(docsUrl.value, '_blank', 'noopener,noreferrer');
 };
 

@@ -69,6 +69,10 @@ type AppInstalledInfo struct {
 	Name string `json:"name"`
 }
 
+type AppOfflineInstallPreflight struct {
+	AppKey string `json:"appKey" validate:"required"`
+}
+
 type AppBackupSearch struct {
 	dto.PageInfo
 	AppInstallID uint `json:"appInstallID"`

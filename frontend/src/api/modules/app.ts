@@ -37,6 +37,34 @@ export const installApp = (install: App.AppInstall) => {
     return http.post<any>('apps/install', install);
 };
 
+export const uploadDatabaseImage = (appKey: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return http.upload<string>(`apps/installed/database/upload?appKey=${appKey}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+};
+
+export const installDatabaseApp = (req: App.DatabaseOfflineInstall) => {
+    return http.post<any>('apps/installed/database/install', req);
+};
+
+export const uploadOpenrestyImage = (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return http.upload<string>('apps/installed/openresty/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+};
+
+export const installOpenrestyApp = (req: App.OpenrestyOfflineInstall) => {
+    return http.post<any>('apps/installed/openresty/install', req);
+};
+
+export const preflightOfflineInstall = (appKey: string) => {
+    return http.post<App.OfflineInstallPreflight>('apps/installed/preflight', { appKey });
+};
+
 export const changePort = (params: App.ChangePort) => {
     return http.post<any>('apps/installed/port/change', params);
 };

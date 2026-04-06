@@ -13,8 +13,7 @@ func (a *AppInstallRouter) InitRouter(Router *gin.RouterGroup) {
 
 	baseApi := v2.ApiGroupApp.BaseApi
 	{
-		groupRouter.POST("/check", baseApi.CheckAppInstalled)
-		groupRouter.POST("/op", baseApi.InstalledOp)
+		groupRouter.POST("/preflight", baseApi.PreflightOfflineInstall)
 		groupRouter.POST("/openresty/upload", baseApi.UploadOpenrestyImage)
 		groupRouter.POST("/openresty/install", baseApi.InstallOpenresty)
 		groupRouter.GET("/openresty/containers", baseApi.ListOpenrestyContainers)

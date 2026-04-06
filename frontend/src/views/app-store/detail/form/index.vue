@@ -117,7 +117,7 @@
                     <span class="input-help">{{ $t('app.gpuConfigHelper') }}</span>
                 </el-form-item>
 
-                <el-form-item pro="pullImage">
+                <el-form-item pro="pullImage" v-if="!isOffLine">
                     <el-checkbox v-model="formData.pullImage" :label="$t('app.pullImage')" size="large" />
                     <span class="input-help">{{ $t('app.pullImageHelper') }}</span>
                 </el-form-item>
@@ -239,7 +239,7 @@ const initFormData = () => ({
     dockerCompose: '',
     version: '',
     appID: '',
-    pullImage: true,
+    pullImage: false,
     taskID: '',
     gpuConfig: false,
     specifyIP: '',

@@ -61,7 +61,7 @@
                         <el-text type="warning">{{ $t('app.backupAppHelper') }}</el-text>
                     </span>
                 </el-form-item>
-                <el-form-item prop="pullImage" v-if="operateReq.operate === 'upgrade'">
+                <el-form-item prop="pullImage" v-if="operateReq.operate === 'upgrade' && !globalStore.isOffLine">
                     <el-checkbox v-model="operateReq.pullImage" :label="$t('app.pullImage')" size="large" />
                     <span class="input-help">{{ $t('app.pullImageHelper') }}</span>
                 </el-form-item>
@@ -108,7 +108,7 @@ import { Rules } from '@/global/form-rules';
 import bus from '@/global/bus';
 import { v4 as uuidv4 } from 'uuid';
 import { useGlobalStore } from '@/composables/useGlobalStore';
-const { currentNode } = useGlobalStore();
+const { currentNode, globalStore } = useGlobalStore();
 
 const composeDiffRef = ref();
 const updateRef = ref<FormInstance>();
@@ -162,6 +162,7 @@ const showOpenclawHttpRollbackNotice = computed(() => {
 });
 
 const toLink = (link: string) => {
+    if (!link || globalStore.isOffLine) return;
     window.open(link, '_blank');
 };
 
@@ -187,7 +188,7 @@ const initData = async () => {
     newCompose.value = '';
     useNewCompose.value = false;
     operateReq.backup = config.data.upgradeBackup == 'Enable';
-    operateReq.pullImage = true;
+    operateReq.pullImage = !globalStore.isOffLine;
     operateReq.dockerCompose = '';
 };
 

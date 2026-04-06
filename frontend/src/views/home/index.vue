@@ -910,6 +910,10 @@ const hideEntrance = () => {
 };
 
 const loadUpgradeStatus = async () => {
+    if (globalStore.isOffLine) {
+        globalStore.hasNewVersion = false;
+        return;
+    }
     const res = await loadUpgradeInfo();
     if (res && (res.data.testVersion || res.data.newVersion || res.data.latestVersion)) {
         globalStore.hasNewVersion = true;

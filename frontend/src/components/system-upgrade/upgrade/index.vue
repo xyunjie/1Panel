@@ -1,5 +1,8 @@
 <template>
     <DrawerPro v-model="drawerVisible" :header="$t('commons.button.upgrade')" @close="handleClose" size="small">
+        <el-alert v-if="globalStore.isOffLine" type="info" :closable="false" show-icon class="mb-4">
+            {{ $t('setting.upgradeFilePathHelper') }}
+        </el-alert>
         <el-form ref="formRef" :model="form" label-width="120px" label-position="top">
             <el-form-item :label="$t('setting.upgradeFilePath')" prop="filePath" :rules="[{ required: true }]">
                 <el-input v-model="form.filePath" :placeholder="$t('setting.upgradeFilePathHelper')" />

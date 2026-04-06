@@ -23,6 +23,7 @@ func commonGroups() []CommonRouter {
 		&AIToolsRouter{},
 		&GroupRouter{},
 		&AlertRouter{},
+		&AppRouter{},
 		&AppInstallRouter{},
 	}
 }

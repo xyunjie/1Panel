@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/1Panel-dev/1Panel/agent/app/dto"
 	"github.com/1Panel-dev/1Panel/agent/app/dto/request"
 	"github.com/1Panel-dev/1Panel/agent/app/dto/response"
 	"github.com/1Panel-dev/1Panel/agent/app/model"
@@ -30,10 +31,13 @@ const (
 )
 
 type OpenrestyInstallReq struct {
-	HttpPort  int    `json:"httpPort" validate:"required"`
-	HttpsPort int    `json:"httpsPort" validate:"required"`
-	ImagePath string `json:"imagePath" validate:"required"`
-	TaskID    string `json:"taskID"`
+	HttpPort      int    `json:"httpPort" validate:"required"`
+	HttpsPort     int    `json:"httpsPort" validate:"required"`
+	ImagePath     string `json:"imagePath" validate:"required"`
+	TaskID        string `json:"taskID"`
+	ContainerName string `json:"containerName"`
+	WebsiteDir    string `json:"websiteDir"`
+	PackageURL    string `json:"packageUrl"`
 }
 
 type OpenrestyLinkReq struct {
@@ -86,18 +90,28 @@ func (o *OpenrestyService) Install(req OpenrestyInstallReq) error {
 		return err
 	}
 
-	containerName := defaultContainerName
+	containerName := req.ContainerName
+	if containerName == "" {
+		containerName = defaultContainerName
+	}
 	if exist, _ := appInstallRepo.GetFirst(appInstallRepo.WithContainerName(containerName)); exist.ID > 0 {
 		return buserr.New("ErrContainerName")
 	}
 
-	websiteDir := path.Join(global.Dir.DataDir, "www")
+	websiteDir := req.WebsiteDir
+	if websiteDir == "" {
+		websiteDir = path.Join(global.Dir.DataDir, "www")
+	}
+	packageURL := req.PackageURL
+	if packageURL == "" {
+		packageURL = "http://archive.ubuntu.com/ubuntu/"
+	}
 
 	env := map[string]string{
 		"CONTAINER_NAME":              containerName,
 		"PANEL_APP_PORT_HTTP":         strconv.Itoa(req.HttpPort),
 		"PANEL_APP_PORT_HTTPS":        strconv.Itoa(req.HttpsPort),
-		"CONTAINER_PACKAGE_URL":       "http://archive.ubuntu.com/ubuntu/",
+		"CONTAINER_PACKAGE_URL":       packageURL,
 		"RESTY_CONFIG_OPTIONS_MORE":   "",
 		"RESTY_ADD_PACKAGE_BUILDDEPS": "",
 		"WEBSITE_DIR":                 websiteDir,
@@ -329,6 +343,49 @@ func initOpenrestyWebsiteDirs(websiteDir string) error {
 	return nil
 }
 
+func offlineOpenrestyParams() string {
+	params, _ := json.Marshal(dto.AppForm{
+		FormFields: []dto.AppFormFields{
+			{
+				Type:     "number",
+				LabelZh:  "HTTP 端口",
+				LabelEn:  "HTTP Port",
+				Required: true,
+				Default:  80,
+				EnvKey:   "PANEL_APP_PORT_HTTP",
+			},
+			{
+				Type:     "number",
+				LabelZh:  "HTTPS 端口",
+				LabelEn:  "HTTPS Port",
+				Required: true,
+				Default:  443,
+				EnvKey:   "PANEL_APP_PORT_HTTPS",
+			},
+			{
+				Type:     "text",
+				LabelZh:  "网站目录",
+				LabelEn:  "Website Directory",
+				Required: false,
+				Default:  "",
+				EnvKey:   "WEBSITE_DIR",
+			},
+		},
+	})
+	return string(params)
+}
+
+func ensureOpenrestyCatalog() error {
+	app, err := ensureOpenrestyApp()
+	if err != nil {
+		return err
+	}
+	if _, err := ensureOpenrestyAppDetail(app.ID); err != nil {
+		return err
+	}
+	return nil
+}
+
 func ensureOpenrestyApp() (*model.App, error) {
 	app, err := appRepo.GetFirst(appRepo.WithKey(constant.AppOpenresty))
 	if err == nil {
@@ -354,12 +411,17 @@ func ensureOpenrestyApp() (*model.App, error) {
 func ensureOpenrestyAppDetail(appID uint) (*model.AppDetail, error) {
 	detail, err := appDetailRepo.GetFirst(appDetailRepo.WithAppId(appID))
 	if err == nil {
+		if detail.Params == "" {
+			detail.Params = offlineOpenrestyParams()
+			_ = appDetailRepo.Update(context.Background(), detail)
+		}
 		return &detail, nil
 	}
 
 	newDetail := model.AppDetail{
 		AppId:         appID,
 		Version:       defaultOpenrestyVersion,
+		Params:        offlineOpenrestyParams(),
 		DockerCompose: string(nginx_conf.OpenrestyDockerCompose),
 		Status:        constant.AppNormal,
 	}

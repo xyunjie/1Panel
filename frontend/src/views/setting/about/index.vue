@@ -17,7 +17,7 @@
                     <div class="flex justify-center">
                         <SystemUpgrade class="upgrade" />
                     </div>
-                    <div class="flex w-full justify-center my-5 flex-wrap md:flex-row gap-4">
+                    <div v-if="!globalStore.isOffLine" class="flex w-full justify-center my-5 flex-wrap md:flex-row gap-4">
                         <el-link @click="toDoc" class="system-link">
                             <el-icon><Document /></el-icon>
                             <span>{{ $t('setting.doc2') }}</span>
@@ -54,15 +54,19 @@ const loading = ref();
 const logoLoadFailed = ref(false);
 
 const toDoc = () => {
+    if (globalStore.isOffLine) return;
     window.open(docsUrl.value, '_blank', 'noopener,noreferrer');
 };
 const toGithub = () => {
+    if (globalStore.isOffLine) return;
     window.open('https://github.com/1Panel-dev/1Panel', '_blank', 'noopener,noreferrer');
 };
 const toIssue = () => {
+    if (globalStore.isOffLine) return;
     window.open('https://github.com/1Panel-dev/1Panel/issues', '_blank', 'noopener,noreferrer');
 };
 const toGithubStar = () => {
+    if (globalStore.isOffLine) return;
     window.open('https://github.com/1Panel-dev/1Panel', '_blank', 'noopener,noreferrer');
 };
 
